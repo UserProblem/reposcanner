@@ -1,0 +1,532 @@
+---
+swagger: "2.0"
+info:
+  description: "This is a simple backend API to allow a user to configure repositories\
+    \ for scanning, trigger a scan of those repositories, and retrieve the results."
+  version: "0.0.1"
+  title: "Repository Secrets Scanner"
+  contact:
+    email: "sean.critica@gmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "localhost"
+basePath: "/v0"
+tags:
+- name: "repositories"
+  description: "Add/remove a repository to/from the data store. Modify or trigger\
+    \ a scan for a repository in the data store."
+- name: "scans"
+  description: "Start, remove, or view the status of repository scans."
+schemes:
+- "https"
+paths:
+  /repositories:
+    get:
+      tags:
+      - "repositories"
+      summary: "Retrieve a paginated list of repositories"
+      description: ""
+      operationId: "listRepositories"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parameters to control the pagination of results"
+        required: false
+        schema:
+          $ref: "#/definitions/PaginationParams"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/RepositoryList"
+        "404":
+          description: "Parameters out-of-bounds"
+        "405":
+          description: "Invalid input"
+  /repository:
+    post:
+      tags:
+      - "repositories"
+      summary: "Add a new repository record"
+      description: ""
+      operationId: "addRepository"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Repository object to be added to the data store"
+        required: true
+        schema:
+          $ref: "#/definitions/RepositoryInfo"
+        x-exportParamName: "Body"
+      responses:
+        "201":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+        "405":
+          description: "Invalid input"
+  /repository/{id}:
+    get:
+      tags:
+      - "repositories"
+      summary: "Retrieve a repository object from the data store with the given id"
+      description: ""
+      operationId: "getRepository"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the repository to retrieve"
+        required: true
+        type: "integer"
+        format: "int64"
+        x-exportParamName: "Id"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/RepositoryRecord"
+        "404":
+          description: "Repository id not found"
+    put:
+      tags:
+      - "repositories"
+      summary: "Modify a repository object in the data store with the given id"
+      description: ""
+      operationId: "modifyRepository"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the repository to retrieve"
+        required: true
+        type: "integer"
+        format: "int64"
+        x-exportParamName: "Id"
+      - in: "body"
+        name: "body"
+        description: "Parameters to modify for the given repository"
+        required: true
+        schema:
+          $ref: "#/definitions/RepositoryInfo"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+        "404":
+          description: "Repository id not found"
+        "405":
+          description: "Invalid input"
+    delete:
+      tags:
+      - "repositories"
+      summary: "Delete a repository object from the data store with the given id,\
+        \ including all related scans and findings"
+      description: ""
+      operationId: "deleteRepository"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the repository to delete"
+        required: true
+        type: "integer"
+        format: "int64"
+        x-exportParamName: "Id"
+      responses:
+        "200":
+          description: "Successful operation"
+        "404":
+          description: "Repository id not found"
+  /repository/{id}/startScan:
+    post:
+      tags:
+      - "repositories"
+      - "scans"
+      summary: "Queue a scan for the repository with the given id."
+      description: ""
+      operationId: "addScan"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the repository to scan"
+        required: true
+        type: "integer"
+        format: "int64"
+        x-exportParamName: "Id"
+      responses:
+        "201":
+          description: "Scan created successfully"
+          schema:
+            $ref: "#/definitions/ApiResponse"
+  /scans:
+    get:
+      tags:
+      - "scans"
+      summary: "Retrieve a paginated list of scans."
+      description: ""
+      operationId: "listScans"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parameters to control the pagination of results"
+        required: false
+        schema:
+          $ref: "#/definitions/PaginationParams"
+        x-exportParamName: "Body"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ScanList"
+        "404":
+          description: "Parameters out-of-bounds"
+        "405":
+          description: "Invalid input"
+  /scan/{id}:
+    get:
+      tags:
+      - "scans"
+      summary: "Retrieve a scan object from the data store with the given id"
+      description: ""
+      operationId: "getScan"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the scan to retrieve"
+        required: true
+        type: "string"
+        x-exportParamName: "Id"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/ScanResults"
+        "404":
+          description: "Scan id not found"
+    delete:
+      tags:
+      - "scans"
+      summary: "Delete a scan object from the data store with the given id, including\
+        \ all related findings. Deleting an incomplete scan will cancel it."
+      description: ""
+      operationId: "deleteScan"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the scan to delete"
+        required: true
+        type: "string"
+        x-exportParamName: "Id"
+      responses:
+        "200":
+          description: "Successful operation"
+        "404":
+          description: "Scan id not found"
+definitions:
+  RepositoryInfo:
+    type: "object"
+    required:
+    - "name"
+    - "url"
+    properties:
+      name:
+        type: "string"
+        description: "short name for the repository"
+      url:
+        type: "string"
+        description: "public URL of the repository"
+      branch:
+        type: "string"
+        description: "branch of the repository"
+        default: "master"
+    example:
+      name: "name"
+      branch: "master"
+      url: "url"
+  RepositoryRecord:
+    type: "object"
+    required:
+    - "id"
+    - "info"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "unique id for this repository"
+      info:
+        $ref: "#/definitions/RepositoryInfo"
+    example:
+      id: 5
+      info:
+        name: "name"
+        branch: "master"
+        url: "url"
+  RepositoryList:
+    type: "object"
+    required:
+    - "items"
+    - "pagination"
+    - "total"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        description: "total number of stored repositories"
+      pagination:
+        $ref: "#/definitions/PaginationParams"
+      items:
+        type: "array"
+        items:
+          $ref: "#/definitions/RepositoryRecord"
+    example:
+      total: 0
+      pagination:
+        offset: 6
+        pageSize: 1
+      items:
+      - id: 5
+        info:
+          name: "name"
+          branch: "master"
+          url: "url"
+      - id: 5
+        info:
+          name: "name"
+          branch: "master"
+          url: "url"
+  ScanInfo:
+    type: "object"
+    required:
+    - "finishedAt"
+    - "queuedAt"
+    - "repoId"
+    - "scanningAt"
+    - "status"
+    properties:
+      repoId:
+        type: "integer"
+        format: "int64"
+        description: "id of the target repository for this scan"
+      queuedAt:
+        type: "string"
+        description: "timestamp when this scan was started"
+      scanningAt:
+        type: "string"
+        description: "timestamp when this scan was started"
+      finishedAt:
+        type: "string"
+        description: "timestamp when this scan was finished"
+      status:
+        type: "string"
+        description: "the current execution status of this scan"
+        enum:
+        - "QUEUED"
+        - "IN PROGRESS"
+        - "SUCCESS"
+        - "FAILURE"
+    example:
+      scanningAt: "scanningAt"
+      repoId: 6
+      queuedAt: "queuedAt"
+      finishedAt: "finishedAt"
+      status: "QUEUED"
+  ScanRecord:
+    type: "object"
+    required:
+    - "id"
+    - "info"
+    properties:
+      id:
+        type: "string"
+        description: "unique id for this scan"
+      info:
+        $ref: "#/definitions/ScanInfo"
+    example:
+      id: "id"
+      info:
+        scanningAt: "scanningAt"
+        repoId: 6
+        queuedAt: "queuedAt"
+        finishedAt: "finishedAt"
+        status: "QUEUED"
+  ScanResults:
+    type: "object"
+    required:
+    - "findings"
+    - "id"
+    - "info"
+    properties:
+      id:
+        type: "string"
+        description: "unique id for this scan"
+      info:
+        $ref: "#/definitions/ScanInfo"
+      findings:
+        $ref: "#/definitions/FindingsList"
+    example:
+      findings: ""
+      id: "id"
+      info:
+        scanningAt: "scanningAt"
+        repoId: 6
+        queuedAt: "queuedAt"
+        finishedAt: "finishedAt"
+        status: "QUEUED"
+  ScanList:
+    type: "object"
+    required:
+    - "items"
+    - "pagination"
+    - "total"
+    properties:
+      total:
+        type: "integer"
+        format: "int32"
+        description: "total number of stored scans"
+      pagination:
+        $ref: "#/definitions/PaginationParams"
+      items:
+        type: "array"
+        items:
+          $ref: "#/definitions/ScanRecord"
+    example:
+      total: 0
+      pagination:
+        offset: 6
+        pageSize: 1
+      items:
+      - id: "id"
+        info:
+          scanningAt: "scanningAt"
+          repoId: 6
+          queuedAt: "queuedAt"
+          finishedAt: "finishedAt"
+          status: "QUEUED"
+      - id: "id"
+        info:
+          scanningAt: "scanningAt"
+          repoId: 6
+          queuedAt: "queuedAt"
+          finishedAt: "finishedAt"
+          status: "QUEUED"
+  FindingsInfo:
+    type: "object"
+    properties:
+      type:
+        type: "string"
+        description: "type of security scan performed"
+      ruleId:
+        type: "string"
+        description: "id of the security rule that produced this finding"
+      location:
+        $ref: "#/definitions/FindingsLocation"
+      metadata:
+        $ref: "#/definitions/FindingsMetadata"
+  FindingsLocation:
+    type: "object"
+    required:
+    - "path"
+    - "positions"
+    properties:
+      path:
+        type: "string"
+        description: "the filename of the source code that produced this finding"
+      positions:
+        $ref: "#/definitions/FileLocation"
+  FileLocation:
+    type: "object"
+    required:
+    - "begin"
+    properties:
+      begin:
+        type: "object"
+        description: "the start of the block of code that produced this finding"
+        properties:
+          line:
+            type: "integer"
+            format: "int32"
+        required:
+        - "line"
+      end:
+        type: "object"
+        description: "if present, the end of the block of code that produced this\
+          \ finding"
+        properties:
+          line:
+            type: "integer"
+            format: "int32"
+        required:
+        - "line"
+  FindingsMetadata:
+    type: "object"
+    required:
+    - "description"
+    - "severity"
+    properties:
+      description:
+        type: "string"
+        description: "description of the security vulnerability that produced this\
+          \ finding"
+      severity:
+        type: "string"
+        description: "classification of the security impact of this finding"
+        enum:
+        - "HIGH"
+        - "MEDIUM"
+        - "LOW"
+        - "INFORMATIONAL"
+  FindingsList:
+    type: "array"
+    items:
+      $ref: "#/definitions/FindingsInfo"
+  PaginationParams:
+    type: "object"
+    properties:
+      offset:
+        type: "integer"
+        format: "int32"
+        description: "start returning repositories from this position in the list"
+        default: 0
+      pageSize:
+        type: "integer"
+        format: "int32"
+        description: "maximum number of repositories to return per request"
+        default: 20
+    example:
+      offset: 6
+      pageSize: 1
+  ApiResponse:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "id produced by the operation"
+      message:
+        type: "string"
+        description: "result of the operation"
+    example:
+      id: 0
+      message: "message"

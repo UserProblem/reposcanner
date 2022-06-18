@@ -43,74 +43,76 @@ func NewRouter() *mux.Router {
 	return router
 }
 
+const api_version string = "/v0"
+
 var routes = Routes{
 	Route{
 		"AddRepository",
 		strings.ToUpper("Post"),
-		"/v0/repository",
+		api_version + "/repository",
 		AddRepository,
 	},
 
 	Route{
 		"AddScan",
 		strings.ToUpper("Post"),
-		"/v0/repository/{id}/startScan",
+		api_version + "/repository/{id}/startScan",
 		AddScan,
 	},
 
 	Route{
 		"DeleteRepository",
 		strings.ToUpper("Delete"),
-		"/v0/repository/{id}",
+		api_version + "/repository/{id}",
 		DeleteRepository,
 	},
 
 	Route{
 		"GetRepository",
 		strings.ToUpper("Get"),
-		"/v0/repository/{id}",
+		api_version + "/repository/{id}",
 		GetRepository,
 	},
 
 	Route{
 		"ListRepositories",
 		strings.ToUpper("Get"),
-		"/v0/repositories",
+		api_version + "/repositories",
 		ListRepositories,
 	},
 
 	Route{
 		"ModifyRepository",
 		strings.ToUpper("Put"),
-		"/v0/repository/{id}",
+		api_version + "/repository/{id}",
 		ModifyRepository,
 	},
 
 	Route{
 		"AddScan",
 		strings.ToUpper("Post"),
-		"/v0/repository/{id}/startScan",
+		api_version + "/repository/{id}/startScan",
 		AddScan,
 	},
 
 	Route{
 		"DeleteScan",
 		strings.ToUpper("Delete"),
-		"/v0/scan/{id}",
+		api_version + "/scan/{id}",
 		DeleteScan,
 	},
 
 	Route{
 		"GetScan",
 		strings.ToUpper("Get"),
-		"/v0/scan/{id}",
+		api_version + "/scan/{id}",
 		GetScan,
 	},
 
 	Route{
 		"ListScans",
 		strings.ToUpper("Get"),
-		"/v0/scans",
+		api_version + "/scans",
 		ListScans,
 	},
 }

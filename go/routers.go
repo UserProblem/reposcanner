@@ -11,7 +11,6 @@
 package swagger
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -44,18 +43,7 @@ func NewRouter() *mux.Router {
 	return router
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
-}
-
 var routes = Routes{
-	Route{
-		"Index",
-		"GET",
-		"/v0/",
-		Index,
-	},
-
 	Route{
 		"AddRepository",
 		strings.ToUpper("Post"),

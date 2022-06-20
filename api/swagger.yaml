@@ -260,10 +260,10 @@ definitions:
       branch:
         type: "string"
         description: "branch of the repository"
-        default: "master"
+        default: "main"
     example:
       name: "name"
-      branch: "master"
+      branch: "main"
       url: "url"
   RepositoryRecord:
     type: "object"

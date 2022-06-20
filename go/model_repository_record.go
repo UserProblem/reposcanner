@@ -17,3 +17,10 @@ type RepositoryRecord struct {
 
 	Info *RepositoryInfo `json:"info"`
 }
+
+func (rr *RepositoryRecord) Clone() *RepositoryRecord {
+	return &RepositoryRecord{
+		Id:   rr.Id,
+		Info: rr.Info.Clone(),
+	}
+}

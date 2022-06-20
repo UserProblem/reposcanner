@@ -18,3 +18,10 @@ type PaginationParams struct {
 	// maximum number of repositories to return per request
 	PageSize int32 `json:"pageSize,omitempty"`
 }
+
+func (pp *PaginationParams) Clone() *PaginationParams {
+	return &PaginationParams{
+		Offset:   pp.Offset,
+		PageSize: pp.PageSize,
+	}
+}

@@ -21,3 +21,19 @@ type RepositoryInfo struct {
 	// branch of the repository
 	Branch string `json:"branch,omitempty"`
 }
+
+func DefaultRepositoryInfo() *RepositoryInfo {
+	return &RepositoryInfo{
+		Name:   "new repo",
+		Url:    "new url",
+		Branch: "main",
+	}
+}
+
+func (ri *RepositoryInfo) Clone() *RepositoryInfo {
+	return &RepositoryInfo{
+		Name:   ri.Name,
+		Url:    ri.Url,
+		Branch: ri.Branch,
+	}
+}

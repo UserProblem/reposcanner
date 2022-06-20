@@ -137,7 +137,7 @@ func TestGetRepositoryListInvalidOffset(t *testing.T) {
 	req, _ := http.NewRequest("GET", api_version+"/repositories", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
 
-	checkResponseCode(t, http.StatusBadRequest, response.Code)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
 func TestGetRepositoryListInvalidPageSize(t *testing.T) {
@@ -149,7 +149,7 @@ func TestGetRepositoryListInvalidPageSize(t *testing.T) {
 	req, _ := http.NewRequest("GET", api_version+"/repositories", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
 
-	checkResponseCode(t, http.StatusBadRequest, response.Code)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
 func TestPostNewRepository(t *testing.T) {

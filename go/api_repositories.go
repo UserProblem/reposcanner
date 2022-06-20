@@ -106,7 +106,7 @@ func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
 	rl, err := a.RepoStore.List(&pp)
 	if err != nil {
 		if err.Error() == "Invalid offset" || err.Error() == "Invalid page size" {
-			respondWithError(w, http.StatusBadRequest, "invalid parameters")
+			respondWithError(w, http.StatusNotFound, "parameters out-of-bounds")
 		} else {
 			log.Printf("Failed to retrieve repository list: %v", err.Error())
 			respondWithError(w, http.StatusInternalServerError,

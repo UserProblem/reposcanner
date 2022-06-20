@@ -49,6 +49,8 @@ paths:
           description: "Invalid input"
         "404":
           description: "Parameters out-of-bounds"
+        "500":
+          description: "Unspecified error"
   /repository:
     post:
       tags:
@@ -75,6 +77,8 @@ paths:
             $ref: "#/definitions/ApiResponse"
         "400":
           description: "Invalid input"
+        "500":
+          description: "Unspecified error"
   /repository/{id}:
     get:
       tags:
@@ -97,6 +101,8 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/RepositoryRecord"
+        "400":
+          description: "Invalid input"
         "404":
           description: "Repository id not found"
     put:
@@ -110,7 +116,7 @@ paths:
       parameters:
       - name: "id"
         in: "path"
-        description: "The id of the repository to retrieve"
+        description: "The id of the repository to modify"
         required: true
         type: "integer"
         format: "int64"
@@ -131,6 +137,8 @@ paths:
           description: "Invalid input"
         "404":
           description: "Repository id not found"
+        "500":
+          description: "Unspecified error"
     delete:
       tags:
       - "repositories"
@@ -149,8 +157,12 @@ paths:
       responses:
         "200":
           description: "Successful operation"
+        "400":
+          description: "Invalid input"
         "404":
           description: "Repository id not found"
+        "500":
+          description: "Unspecified error"
   /repository/{id}/startScan:
     post:
       tags:

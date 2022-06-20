@@ -95,6 +95,14 @@ func TestRetrieveRepositoryRecord(t *testing.T) {
 	}
 }
 
+func TestRetrieveInvalidRepositoryRecord(t *testing.T) {
+	rs := initializeRepoStore(t)
+
+	if _, err := rs.Retrieve(1); err == nil {
+		t.Errorf("Expected error but got successful result.\n")
+	}
+}
+
 func TestDeleteRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
@@ -119,6 +127,14 @@ func TestDeleteRepositoryRecord(t *testing.T) {
 
 	if !strings.HasPrefix(err.Error(), "Id not found") {
 		t.Errorf("Expected error message to be 'Id does not exist'. Got '%v'\n", err.Error())
+	}
+}
+
+func TestDeleteInvalidRepositoryRecord(t *testing.T) {
+	rs := initializeRepoStore(t)
+
+	if err := rs.Delete(1); err == nil {
+		t.Errorf("Expected error but got successful result.\n")
 	}
 }
 
@@ -163,6 +179,19 @@ func TestUpdateRepositoryRecord(t *testing.T) {
 
 	if rrMod.Info.Branch != "modified" {
 		t.Errorf("Expected branch to be 'mmodified'. Got '%v'\n", rrMod.Info.Branch)
+	}
+}
+
+func TestUpdateInvalidRepositoryRecord(t *testing.T) {
+	rs := initializeRepoStore(t)
+
+	rr := sw.RepositoryRecord{
+		Id: 1,
+		Info: sw.DefaultRepositoryInfo(),
+	}
+
+	if err := rs.Update(&rr); err == nil {
+		t.Errorf("Expected error but got successful result.\n")
 	}
 }
 
@@ -222,5 +251,41 @@ func TestRetrieveRepositoryList(t *testing.T) {
 		}
 
 		j++
+	}
+}
+
+func TestRetrieveEmptyRepositoryList(t *testing.T) {
+	rs := initializeRepoStore(t)
+
+	rl, err := rs.List(&sw.PaginationParams{Offset: 0, PageSize: 20})
+	if err != nil {
+		t.Errorf("Expected successful operation. Got error: %v\n", err.Error())
+		t.FailNow()
+	}
+
+	if rl.Total != 0 {
+		t.Errorf("Expected total to be 0. Got %v\n", rl.Total)
+	}
+
+	if len(rl.Items) != 0 {
+		t.Errorf("Expected items to be empty. Got %v\n", rl.Items)
+	}
+}
+
+func TestRetrieveRepositoryListInvalidOffset(t *testing.T) {
+	rs := initializeRepoStore(t)
+	
+	_, err := rs.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
+	if err.Error() != "Invalid offset" {
+		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())
+	}
+}
+
+func TestRetrieveRepositoryListInvalidPageSize(t *testing.T) {
+	rs := initializeRepoStore(t)
+
+	_, err := rs.List(&sw.PaginationParams{Offset: 0, PageSize: 0})
+	if err.Error() != "Invalid page size" {
+		t.Errorf("Expected error 'Invalid page size'. Got '%v'\n", err.Error())
 	}
 }

@@ -186,7 +186,7 @@ func TestUpdateInvalidRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
 	rr := sw.RepositoryRecord{
-		Id: 1,
+		Id:   1,
 		Info: sw.DefaultRepositoryInfo(),
 	}
 
@@ -274,7 +274,7 @@ func TestRetrieveEmptyRepositoryList(t *testing.T) {
 
 func TestRetrieveRepositoryListInvalidOffset(t *testing.T) {
 	rs := initializeRepoStore(t)
-	
+
 	_, err := rs.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
 	if err.Error() != "Invalid offset" {
 		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())

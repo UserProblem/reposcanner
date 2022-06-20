@@ -172,7 +172,7 @@ func (rs *RepoStore) List(pp *PaginationParams) (*RepositoryList, error) {
 		_ = it.Next()
 	}
 
-	limit := rs.total - pp.Offset + 1
+	limit := rs.total - pp.Offset
 	if limit > pp.PageSize {
 		limit = pp.PageSize
 	}

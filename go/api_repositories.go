@@ -11,7 +11,9 @@
 package swagger
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -93,6 +95,15 @@ func (a *App) GetRepository(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
 	var pp PaginationParams
+	if r.Body != nil {
+		contents, _ := ioutil.ReadAll(r.Body)
+		if strings.TrimSpace(string(contents)) == "" {
+			r.Body = nil
+		} else {
+			r.Body = ioutil.NopCloser(bytes.NewReader(contents))
+		}
+	}
+
 	if r.Body != nil {
 		decoder := json.NewDecoder(r.Body)
 		if err := decoder.Decode(&pp); err != nil {

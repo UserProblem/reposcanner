@@ -45,10 +45,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/RepositoryList"
+        "400":
+          description: "Invalid input"
         "404":
           description: "Parameters out-of-bounds"
-        "405":
-          description: "Invalid input"
   /repository:
     post:
       tags:
@@ -73,7 +73,7 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
-        "405":
+        "400":
           description: "Invalid input"
   /repository/{id}:
     get:
@@ -127,10 +127,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ApiResponse"
+        "400":
+          description: "Invalid input"
         "404":
           description: "Repository id not found"
-        "405":
-          description: "Invalid input"
     delete:
       tags:
       - "repositories"
@@ -198,10 +198,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/ScanList"
+        "400":
+          description: "Invalid input"
         "404":
           description: "Parameters out-of-bounds"
-        "405":
-          description: "Invalid input"
   /scan/{id}:
     get:
       tags:

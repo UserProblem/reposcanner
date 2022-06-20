@@ -17,6 +17,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type HttpRouter interface {
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
+}
+
 type Route struct {
 	Name        string
 	Method      string
@@ -26,7 +30,81 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter() *mux.Router {
+const api_version string = "/v0"
+
+func (a *App) NewRouter() HttpRouter {
+	var routes = Routes{
+		Route{
+			"AddRepository",
+			strings.ToUpper("Post"),
+			api_version + "/repository",
+			a.AddRepository,
+		},
+
+		Route{
+			"AddScan",
+			strings.ToUpper("Post"),
+			api_version + "/repository/{id}/startScan",
+			AddScan,
+		},
+
+		Route{
+			"DeleteRepository",
+			strings.ToUpper("Delete"),
+			api_version + "/repository/{id}",
+			a.DeleteRepository,
+		},
+
+		Route{
+			"GetRepository",
+			strings.ToUpper("Get"),
+			api_version + "/repository/{id}",
+			a.GetRepository,
+		},
+
+		Route{
+			"ListRepositories",
+			strings.ToUpper("Get"),
+			api_version + "/repositories",
+			a.ListRepositories,
+		},
+
+		Route{
+			"ModifyRepository",
+			strings.ToUpper("Put"),
+			api_version + "/repository/{id}",
+			a.ModifyRepository,
+		},
+
+		Route{
+			"AddScan",
+			strings.ToUpper("Post"),
+			api_version + "/repository/{id}/startScan",
+			AddScan,
+		},
+
+		Route{
+			"DeleteScan",
+			strings.ToUpper("Delete"),
+			api_version + "/scan/{id}",
+			DeleteScan,
+		},
+
+		Route{
+			"GetScan",
+			strings.ToUpper("Get"),
+			api_version + "/scan/{id}",
+			GetScan,
+		},
+
+		Route{
+			"ListScans",
+			strings.ToUpper("Get"),
+			api_version + "/scans",
+			ListScans,
+		},
+	}
+
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		var handler http.Handler
@@ -41,78 +119,4 @@ func NewRouter() *mux.Router {
 	}
 
 	return router
-}
-
-const api_version string = "/v0"
-
-var routes = Routes{
-	Route{
-		"AddRepository",
-		strings.ToUpper("Post"),
-		api_version + "/repository",
-		AddRepository,
-	},
-
-	Route{
-		"AddScan",
-		strings.ToUpper("Post"),
-		api_version + "/repository/{id}/startScan",
-		AddScan,
-	},
-
-	Route{
-		"DeleteRepository",
-		strings.ToUpper("Delete"),
-		api_version + "/repository/{id}",
-		DeleteRepository,
-	},
-
-	Route{
-		"GetRepository",
-		strings.ToUpper("Get"),
-		api_version + "/repository/{id}",
-		GetRepository,
-	},
-
-	Route{
-		"ListRepositories",
-		strings.ToUpper("Get"),
-		api_version + "/repositories",
-		ListRepositories,
-	},
-
-	Route{
-		"ModifyRepository",
-		strings.ToUpper("Put"),
-		api_version + "/repository/{id}",
-		ModifyRepository,
-	},
-
-	Route{
-		"AddScan",
-		strings.ToUpper("Post"),
-		api_version + "/repository/{id}/startScan",
-		AddScan,
-	},
-
-	Route{
-		"DeleteScan",
-		strings.ToUpper("Delete"),
-		api_version + "/scan/{id}",
-		DeleteScan,
-	},
-
-	Route{
-		"GetScan",
-		strings.ToUpper("Get"),
-		api_version + "/scan/{id}",
-		GetScan,
-	},
-
-	Route{
-		"ListScans",
-		strings.ToUpper("Get"),
-		api_version + "/scans",
-		ListScans,
-	},
 }

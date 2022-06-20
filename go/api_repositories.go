@@ -11,30 +11,160 @@
 package swagger
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gorilla/mux"
 )
 
-func AddRepository(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	var ri RepositoryInfo
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&ri); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if ri.Branch == "" {
+		ri.Branch = "main"
+	}
+
+	rr, err := a.RepoStore.Insert(&ri)
+	if err != nil {
+		log.Printf("Failed to add repository to the data store: %v\n", err.Error())
+		respondWithError(w, http.StatusInternalServerError,
+			"failed to add repository to the data store")
+		return
+	}
+
+	body := &ApiResponse{
+		Id:      rr.Id,
+		Message: "repository created successfully",
+	}
+	respondWithJSON(w, http.StatusCreated, body)
+}
+
+func (a *App) DeleteRepository(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid repository id")
+		return
+	}
+
+	if err = a.RepoStore.Delete(int64(id)); err != nil {
+		if !strings.HasPrefix(err.Error(), "Id not found") {
+			log.Printf("Failed to delete repository from the data store: %v\n", err.Error())
+			respondWithError(w, http.StatusInternalServerError, "failed to delete repository")
+		} else {
+			respondWithError(w, http.StatusNotFound, "repository id not found")
+		}
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
-func DeleteRepository(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func (a *App) GetRepository(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid repository id")
+		return
+	}
+
+	var rr *RepositoryRecord
+	rr, err = a.RepoStore.Retrieve(int64(id))
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "repository id not found")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, rr)
 }
 
-func GetRepository(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
+	var pp PaginationParams
+	if r.Body != nil {
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&pp); err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+	} else {
+		pp = PaginationParams{Offset: 0, PageSize: 20}
+	}
+
+	rl, err := a.RepoStore.List(&pp)
+	if err != nil {
+		if err.Error() == "Invalid offset" || err.Error() == "Invalid page size" {
+			respondWithError(w, http.StatusBadRequest, "invalid parameters")
+		} else {
+			log.Printf("Failed to retrieve repository list: %v", err.Error())
+			respondWithError(w, http.StatusInternalServerError,
+				"failed to retrieve repository list from the data store")
+		}
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, rl)
 }
 
-func ListRepositories(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid repository id")
+		return
+	}
+
+	if r.Body == nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	var ri RepositoryInfo
+	decoder := json.NewDecoder(r.Body)
+	if err = decoder.Decode(&ri); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	rr := RepositoryRecord{Id: int64(id), Info: &ri}
+	if err = a.RepoStore.Update(&rr); err != nil {
+		if strings.HasPrefix(err.Error(), "Id not found") {
+			respondWithError(w, http.StatusNotFound, "repository id not found")
+		} else {
+			log.Printf("Failed to update repository record: %v\n", err.Error())
+			respondWithError(w, http.StatusInternalServerError,
+				"failed to update repository record")
+		}
+		return
+	}
+
+	body := &ApiResponse{
+		Id:      rr.Id,
+		Message: "repository modified successfully",
+	}
+	respondWithJSON(w, http.StatusOK, body)
 }
 
-func ModifyRepository(w http.ResponseWriter, r *http.Request) {
+func respondWithError(w http.ResponseWriter, code int, message string) {
+	respondWithJSON(w, code, map[string]string{"error": message})
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(code)
+	w.Write(response)
 }

@@ -20,7 +20,8 @@ import (
 func main() {
 	log.Printf("Server started")
 
-	router := sw.NewRouter()
+	var app sw.App
+	app.Initialize()
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8080", app.Router))
 }

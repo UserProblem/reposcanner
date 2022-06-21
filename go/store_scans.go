@@ -67,10 +67,24 @@ func (rs *ScanStore) NextId() string {
 	return EncodeScanId(rs.nextId)
 }
 
+// Helper function to convert a numeric value into a base64
+// string value that can be used as an id
 func EncodeScanId(v uint64) string {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, v)
 	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// Helper function to validate that the given string is a
+// proper base64 string value
+func ValidScanId(s string) bool {
+	if len(s) != 11 {
+		return false
+	}
+	if _, err := base64.RawURLEncoding.DecodeString(s); err != nil {
+		return false
+	}
+	return true
 }
 
 // Add a new scan record to the data store. Returns a pointer

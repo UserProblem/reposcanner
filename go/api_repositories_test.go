@@ -111,7 +111,7 @@ func TestGetRepositoryList(t *testing.T) {
 	}
 
 	for i := 0; i < int(pp.PageSize); i++ {
-		expectedId := int64(i) + int64(pp.Offset)
+		expectedId := int64(i) + int64(pp.Offset) + 1
 		if body.Items[i].Id != expectedId {
 			t.Errorf("Expected id to be %v. Got %v\n", expectedId, body.Items[i].Id)
 		}

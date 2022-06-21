@@ -235,7 +235,7 @@ func TestRetrieveRepositoryList(t *testing.T) {
 		t.Errorf("Expected total number of items to be 5. Got %v\n", len(rl.Items))
 	}
 
-	var j int64 = 2
+	var j int64 = 3
 	for k := range rl.Items {
 		rr := rl.Items[k]
 		if rr.Id != j {

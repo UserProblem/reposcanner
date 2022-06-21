@@ -168,7 +168,7 @@ func (rs *RepoStore) List(pp *PaginationParams) (*RepositoryList, error) {
 		return nil, errors.New(fmt.Sprintf("Cannot retrieve repository list: %v", err.Error()))
 	}
 
-	for i := int32(1); i < pp.Offset; i++ {
+	for i := int32(0); i < pp.Offset; i++ {
 		_ = it.Next()
 	}
 

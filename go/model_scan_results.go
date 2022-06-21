@@ -17,5 +17,5 @@ type ScanResults struct {
 
 	Info *ScanInfo `json:"info"`
 
-	Findings *FindingsList `json:"findings"`
+	Findings []FindingsInfo `json:"findings"`
 }

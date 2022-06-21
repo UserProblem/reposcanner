@@ -11,25 +11,131 @@
 package swagger
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/gorilla/mux"
 )
 
-func AddScan(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid repository id")
+		return
+	}
+
+	if _, err := a.RepoStore.Retrieve(int64(id)); err != nil {
+		respondWithError(w, http.StatusNotFound, "repository id not found")
+		return
+	}
+
+	si := DefaultScanInfo()
+	si.RepoId = int64(id)
+	si.QueuedAt = currentTimestamptz()
+
+	var sr *ScanRecord
+	sr, err = a.ScanStore.Insert(si)
+	if err != nil {
+		log.Printf("Failed to add scan to the data store: %v\n", err.Error())
+		respondWithError(w, http.StatusInternalServerError,
+			"failed to add scan to the data store")
+		return
+	}
+
+	body := &ApiResponse{
+		Id:      0,
+		Message: sr.Id,
+	}
+
+	respondWithJSON(w, http.StatusCreated, body)
+}
+
+func (a *App) DeleteScan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if !ValidScanId(id) {
+		respondWithError(w, http.StatusBadRequest, "invalid scan id")
+		return
+	}
+
+	// TODO TODO TODO TODO cancel ongoing scan
+
+	if err := a.ScanStore.Delete(id); err != nil {
+		if !strings.HasPrefix(err.Error(), "Id not found") {
+			log.Printf("Failed to delete scan from the data store: %v\n", err.Error())
+			respondWithError(w, http.StatusInternalServerError, "failed to delete scan")
+		} else {
+			respondWithError(w, http.StatusNotFound, "scan id not found")
+		}
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
-func DeleteScan(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+func (a *App) GetScan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if !ValidScanId(id) {
+		respondWithError(w, http.StatusBadRequest, "invalid scan id")
+		return
+	}
+
+	sr, err := a.ScanStore.Retrieve(id)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "scan id not found")
+		return
+	}
+
+	sres := &ScanResults{
+		Id:       sr.Id,
+		Info:     sr.Info,
+		Findings: make([]FindingsInfo, 0),
+	}
+
+	// TODO TODO TODO add findings
+
+	respondWithJSON(w, http.StatusOK, sres)
 }
 
-func GetScan(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
+func (a *App) ListScans(w http.ResponseWriter, r *http.Request) {
+	var pp PaginationParams
+	if r.Body != nil {
+		contents, _ := ioutil.ReadAll(r.Body)
+		if strings.TrimSpace(string(contents)) == "" {
+			r.Body = nil
+		} else {
+			r.Body = ioutil.NopCloser(bytes.NewReader(contents))
+		}
+	}
 
-func ListScans(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	if r.Body != nil {
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&pp); err != nil {
+			respondWithError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+	} else {
+		pp = PaginationParams{Offset: 0, PageSize: 20}
+	}
+
+	sl, err := a.ScanStore.List(&pp)
+	if err != nil {
+		if err.Error() == "Invalid offset" || err.Error() == "Invalid page size" {
+			respondWithError(w, http.StatusNotFound, "parameters out-of-bounds")
+		} else {
+			log.Printf("Failed to retrieve scan list: %v", err.Error())
+			respondWithError(w, http.StatusInternalServerError,
+				"failed to retrieve scan list from the data store")
+		}
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, sl)
 }

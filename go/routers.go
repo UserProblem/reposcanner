@@ -45,7 +45,7 @@ func (a *App) NewRouter() HttpRouter {
 			"AddScan",
 			strings.ToUpper("Post"),
 			api_version + "/repository/{id}/startScan",
-			AddScan,
+			a.AddScan,
 		},
 
 		Route{
@@ -80,28 +80,28 @@ func (a *App) NewRouter() HttpRouter {
 			"AddScan",
 			strings.ToUpper("Post"),
 			api_version + "/repository/{id}/startScan",
-			AddScan,
+			a.AddScan,
 		},
 
 		Route{
 			"DeleteScan",
 			strings.ToUpper("Delete"),
 			api_version + "/scan/{id}",
-			DeleteScan,
+			a.DeleteScan,
 		},
 
 		Route{
 			"GetScan",
 			strings.ToUpper("Get"),
 			api_version + "/scan/{id}",
-			GetScan,
+			a.GetScan,
 		},
 
 		Route{
 			"ListScans",
 			strings.ToUpper("Get"),
 			api_version + "/scans",
-			ListScans,
+			a.ListScans,
 		},
 	}
 

@@ -102,8 +102,6 @@ func (c *Controller) Stop() {
 func (c *Controller) AddJob(ri *sw.RepositoryInfo) *Job {
 	log.Printf("Received request to scan '%v'\n", ri.Name)
 
-	// TODO validate url
-
 	job := Job{
 		Id:     <-c.nextJobId,
 		Repo:   ri.Clone(),

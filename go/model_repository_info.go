@@ -25,7 +25,7 @@ type RepositoryInfo struct {
 func DefaultRepositoryInfo() *RepositoryInfo {
 	return &RepositoryInfo{
 		Name:   "new repo",
-		Url:    "new url",
+		Url:    "http://example.com/repo",
 		Branch: "main",
 	}
 }

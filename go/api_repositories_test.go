@@ -14,7 +14,7 @@ func addDummyRepoRecords(t *testing.T, n int) {
 	for i := 1; i <= n; i++ {
 		ri := sw.RepositoryInfo{
 			Name:   "repo name " + strconv.Itoa(i),
-			Url:    "repo url " + strconv.Itoa(i),
+			Url:    "http://example.com/repo/" + strconv.Itoa(i),
 			Branch: "main",
 		}
 
@@ -159,7 +159,7 @@ func TestPostNewRepositoryUnspecifiedBranch(t *testing.T) {
 
 	newRepo := &sw.RepositoryInfo{
 		Name: "repo name",
-		Url:  "repo url",
+		Url:  "http://example.com/repo",
 	}
 	reqBody, _ := json.Marshal(newRepo)
 
@@ -260,8 +260,8 @@ func TestModifyRepository(t *testing.T) {
 		t.Errorf("Expected name to be 'repo name 2'. Got '%v'\n", rr.Info.Name)
 	}
 
-	if rr.Info.Url != "repo url 2" {
-		t.Errorf("Expected url to be 'repo url 2'. Got '%v'\n", rr.Info.Url)
+	if rr.Info.Url != "http://example.com/repo/2" {
+		t.Errorf("Expected url to be 'http://example.com/repo/2'. Got '%v'\n", rr.Info.Url)
 	}
 
 	if rr.Info.Branch != "main" {
@@ -270,7 +270,7 @@ func TestModifyRepository(t *testing.T) {
 
 	modifiedRepo := sw.RepositoryInfo{
 		Name:   "modified repo name",
-		Url:    "modified repo url",
+		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
 	}
 
@@ -318,7 +318,7 @@ func TestModifyRepositoryInvalidId(t *testing.T) {
 
 	modifiedRepo := sw.RepositoryInfo{
 		Name:   "modified repo name",
-		Url:    "modified repo url",
+		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
 	}
 
@@ -356,7 +356,7 @@ func TestModifyRepositoryNonExistentId(t *testing.T) {
 
 	modifiedRepo := sw.RepositoryInfo{
 		Name:   "modified repo name",
-		Url:    "modified repo url",
+		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
 	}
 

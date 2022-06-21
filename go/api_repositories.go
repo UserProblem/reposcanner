@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -32,6 +33,11 @@ func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&ri); err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if _, err := url.ParseRequestURI(ri.Url); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid url")
 		return
 	}
 
@@ -146,6 +152,11 @@ func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&ri); err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if _, err := url.ParseRequestURI(ri.Url); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid url")
 		return
 	}
 

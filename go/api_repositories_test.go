@@ -202,6 +202,21 @@ func TestPostNewRepositoryInvalidBody(t *testing.T) {
 	checkResponseCode(t, http.StatusBadRequest, response.Code)
 }
 
+func TestPostNewRepositoryInvalidUrl(t *testing.T) {
+	app.ClearStores()
+
+	newRepo := &sw.RepositoryInfo{
+		Name: "repo name",
+		Url:  "http//invalid/url",
+	}
+	reqBody, _ := json.Marshal(newRepo)
+
+	req, _ := http.NewRequest("POST", api_version+"/repository", bytes.NewBuffer(reqBody))
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+}
+
 func TestGetRepository(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 2)
@@ -344,6 +359,23 @@ func TestModifyRepositoryInvalidBody(t *testing.T) {
 	addDummyRepoRecords(t, 2)
 
 	reqBody := []byte("invalid body")
+	req, _ := http.NewRequest("PUT", api_version+"/repository/2", bytes.NewBuffer(reqBody))
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+}
+
+func TestModifyRepositoryInvalidUrl(t *testing.T) {
+	app.ClearStores()
+	addDummyRepoRecords(t, 2)
+
+	modifiedRepo := sw.RepositoryInfo{
+		Name:   "modified repo name",
+		Url:    "http://invalid repo/modified",
+		Branch: "modified",
+	}
+
+	reqBody, _ := json.Marshal(modifiedRepo)
 	req, _ := http.NewRequest("PUT", api_version+"/repository/2", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
 

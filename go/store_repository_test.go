@@ -12,8 +12,7 @@ import (
 func initializeRepoStore(t *testing.T) *sw.RepoStore {
 	rs, err := sw.NewRepoStore()
 	if err != nil {
-		t.Errorf("Failed to initialize repository store.")
-		t.FailNow()
+		t.Fatalf("Failed to initialize repository store.")
 	}
 	return rs
 }
@@ -40,8 +39,7 @@ func TestStoreNewRepositoryInfo(t *testing.T) {
 	rr, err := rs.Insert(ri)
 
 	if err != nil {
-		t.Errorf("Failed to insert repository info into the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
 	if rr.Id != 1 {
@@ -68,14 +66,12 @@ func TestRetrieveRepositoryRecord(t *testing.T) {
 	rr, err := rs.Insert(ri)
 
 	if err != nil {
-		t.Errorf("Failed to insert repository info into the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
 	rr, err = rs.Retrieve(1)
 	if err != nil {
-		t.Errorf("Failed to retrieve repository record from the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to retrieve repository record from the database.\n")
 	}
 
 	if rr.Id != 1 {
@@ -110,23 +106,20 @@ func TestDeleteRepositoryRecord(t *testing.T) {
 	_, err := rs.Insert(ri)
 
 	if err != nil {
-		t.Errorf("Failed to insert repository info into the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
 	if err := rs.Delete(1); err != nil {
-		t.Errorf("Failed to delete repository record from the database (%s)\n", err.Error())
-		t.FailNow()
+		t.Fatalf("Failed to delete repository record from the database (%s)\n", err.Error())
 	}
 
 	err = rs.Delete(1)
 	if err == nil {
-		t.Errorf("Expected error result but got a valid record.\n")
-		t.FailNow()
+		t.Fatalf("Expected error result but got a valid record.\n")
 	}
 
 	if !strings.HasPrefix(err.Error(), "Id not found") {
-		t.Errorf("Expected error message to be 'Id does not exist'. Got '%v'\n", err.Error())
+		t.Errorf("Expected error message to be 'Id not found'. Got '%v'\n", err.Error())
 	}
 }
 
@@ -145,8 +138,7 @@ func TestUpdateRepositoryRecord(t *testing.T) {
 
 	rrOrig, err := rs.Insert(ri)
 	if err != nil {
-		t.Errorf("Failed to insert repository info into the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
 	rrMod := &sw.RepositoryRecord{
@@ -159,26 +151,24 @@ func TestUpdateRepositoryRecord(t *testing.T) {
 	}
 
 	if err := rs.Update(rrMod); err != nil {
-		t.Errorf("Failed to update repository info into the database (%v).\n", err.Error())
-		t.FailNow()
+		t.Fatalf("Failed to update repository info into the database (%v).\n", err.Error())
 	}
 
 	rrMod, err = rs.Retrieve(rrOrig.Id)
 	if err != nil {
-		t.Errorf("Failed to retrieve repository record from the database.\n")
-		t.FailNow()
+		t.Fatalf("Failed to retrieve repository record from the database.\n")
 	}
 
 	if rrMod.Info.Name != "modified repo" {
-		t.Errorf("Expected name to be 'mmodified repo'. Got '%v'\n", rrMod.Info.Name)
+		t.Errorf("Expected name to be 'modified repo'. Got '%v'\n", rrMod.Info.Name)
 	}
 
 	if rrMod.Info.Url != "modified url" {
-		t.Errorf("Expected url to be 'mmodified url'. Got '%v'\n", rrMod.Info.Url)
+		t.Errorf("Expected url to be 'modified url'. Got '%v'\n", rrMod.Info.Url)
 	}
 
 	if rrMod.Info.Branch != "modified" {
-		t.Errorf("Expected branch to be 'mmodified'. Got '%v'\n", rrMod.Info.Branch)
+		t.Errorf("Expected branch to be 'modified'. Got '%v'\n", rrMod.Info.Branch)
 	}
 }
 
@@ -208,15 +198,13 @@ func TestRetrieveRepositoryList(t *testing.T) {
 		ri.Url = ri.Url + fmt.Sprintf(" %v", i)
 
 		if _, err = rs.Insert(ri); err != nil {
-			t.Errorf(err.Error())
-			t.FailNow()
+			t.Fatalf(err.Error())
 		}
 	}
 
 	rl, err := rs.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
 	if err != nil {
-		t.Errorf("Failed to retrieve repository list: %v", err.Error())
-		t.FailNow()
+		t.Fatalf("Failed to retrieve repository list: %v", err.Error())
 	}
 
 	if rl.Total != totalRecords {
@@ -259,8 +247,7 @@ func TestRetrieveEmptyRepositoryList(t *testing.T) {
 
 	rl, err := rs.List(&sw.PaginationParams{Offset: 0, PageSize: 20})
 	if err != nil {
-		t.Errorf("Expected successful operation. Got error: %v\n", err.Error())
-		t.FailNow()
+		t.Fatalf("Expected successful operation. Got error: %v\n", err.Error())
 	}
 
 	if rl.Total != 0 {

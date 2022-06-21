@@ -27,3 +27,23 @@ type ScanInfo struct {
 	// the current execution status of this scan
 	Status string `json:"status"`
 }
+
+func DefaultScanInfo() *ScanInfo {
+	return &ScanInfo{
+		RepoId: 0,
+		QueuedAt: "1970-01-01 00:00:00+0",
+		ScanningAt: "",
+		FinishedAt: "",
+		Status: "QUEUED",
+	}
+}
+
+func (si *ScanInfo) Clone() *ScanInfo {
+	return &ScanInfo{
+		RepoId: si.RepoId,
+		QueuedAt: si.QueuedAt,
+		ScanningAt: si.ScanningAt,
+		FinishedAt: si.FinishedAt,
+		Status: si.Status,
+	}
+}

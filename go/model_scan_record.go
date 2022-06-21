@@ -17,3 +17,10 @@ type ScanRecord struct {
 
 	Info *ScanInfo `json:"info"`
 }
+
+func (sr *ScanRecord) Clone() *ScanRecord {
+	return &ScanRecord{
+		Id: sr.Id,
+		Info: sr.Info.Clone(),
+	}
+}

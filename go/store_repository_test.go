@@ -64,12 +64,13 @@ func TestRetrieveRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
 	ri := models.DefaultRepositoryInfo()
-	rr, err := rs.Insert(ri)
+	_, err := rs.Insert(ri)
 
 	if err != nil {
 		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
+	var rr *models.RepositoryRecord
 	rr, err = rs.Retrieve(1)
 	if err != nil {
 		t.Fatalf("Failed to retrieve repository record from the database.\n")
@@ -119,8 +120,8 @@ func TestDeleteRepositoryRecord(t *testing.T) {
 		t.Fatalf("Expected error result but got a valid record.\n")
 	}
 
-	if !strings.HasPrefix(err.Error(), "Id not found") {
-		t.Errorf("Expected error message to be 'Id not found'. Got '%v'\n", err.Error())
+	if !strings.HasPrefix(err.Error(), "id not found") {
+		t.Errorf("Expected error message to be 'id not found'. Got '%v'\n", err.Error())
 	}
 }
 
@@ -264,8 +265,8 @@ func TestRetrieveRepositoryListInvalidOffset(t *testing.T) {
 	rs := initializeRepoStore(t)
 
 	_, err := rs.List(&models.PaginationParams{Offset: 2, PageSize: 5})
-	if err.Error() != "Invalid offset" {
-		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())
+	if err.Error() != "invalid offset" {
+		t.Errorf("Expected error 'invalid offset'. Got '%v'\n", err.Error())
 	}
 }
 
@@ -273,7 +274,7 @@ func TestRetrieveRepositoryListInvalidPageSize(t *testing.T) {
 	rs := initializeRepoStore(t)
 
 	_, err := rs.List(&models.PaginationParams{Offset: 0, PageSize: 0})
-	if err.Error() != "Invalid page size" {
-		t.Errorf("Expected error 'Invalid page size'. Got '%v'\n", err.Error())
+	if err.Error() != "invalid page size" {
+		t.Errorf("Expected error 'invalid page size'. Got '%v'\n", err.Error())
 	}
 }

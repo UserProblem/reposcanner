@@ -20,8 +20,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/UserProblem/reposcanner/models"
+	"github.com/gorilla/mux"
 )
 
 func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (a *App) DeleteRepository(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = a.RepoStore.Delete(int64(id)); err != nil {
-		if !strings.HasPrefix(err.Error(), "Id not found") {
+		if !strings.HasPrefix(err.Error(), "id not found") {
 			log.Printf("Failed to delete repository from the data store: %v\n", err.Error())
 			respondWithError(w, http.StatusInternalServerError, "failed to delete repository")
 		} else {
@@ -123,7 +123,7 @@ func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
 
 	rl, err := a.RepoStore.List(&pp)
 	if err != nil {
-		if err.Error() == "Invalid offset" || err.Error() == "Invalid page size" {
+		if err.Error() == "invalid offset" || err.Error() == "invalid page size" {
 			respondWithError(w, http.StatusNotFound, "parameters out-of-bounds")
 		} else {
 			log.Printf("Failed to retrieve repository list: %v", err.Error())
@@ -163,7 +163,7 @@ func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
 
 	rr := models.RepositoryRecord{Id: int64(id), Info: &ri}
 	if err = a.RepoStore.Update(&rr); err != nil {
-		if strings.HasPrefix(err.Error(), "Id not found") {
+		if strings.HasPrefix(err.Error(), "id not found") {
 			respondWithError(w, http.StatusNotFound, "repository id not found")
 		} else {
 			log.Printf("Failed to update repository record: %v\n", err.Error())

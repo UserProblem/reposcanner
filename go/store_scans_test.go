@@ -71,13 +71,14 @@ func TestRetrieveScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
 
 	si := models.DefaultScanInfo()
-	sr, err := ss.Insert(si)
+	_, err := ss.Insert(si)
 
 	if err != nil {
 		t.Errorf("Failed to insert scan info into the database.\n")
 		t.FailNow()
 	}
 
+	var sr *models.ScanRecord
 	sr, err = ss.Retrieve(sw.EncodeScanId(1))
 	if err != nil {
 		t.Errorf("Failed to retrieve scan record from the database.\n")
@@ -137,7 +138,7 @@ func TestDeleteScanRecord(t *testing.T) {
 		t.Fatalf("Expected error result but got a valid record.\n")
 	}
 
-	if !strings.HasPrefix(err.Error(), "Id not found") {
+	if !strings.HasPrefix(err.Error(), "id not found") {
 		t.Errorf("Expected error message to be 'Id not found'. Got '%v'\n", err.Error())
 	}
 }
@@ -274,8 +275,8 @@ func TestRetrieveScanListInvalidOffset(t *testing.T) {
 	ss := initializeScanStore(t)
 
 	_, err := ss.List(&models.PaginationParams{Offset: 2, PageSize: 5})
-	if err.Error() != "Invalid offset" {
-		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())
+	if err.Error() != "invalid offset" {
+		t.Errorf("Expected error 'invalid offset'. Got '%v'\n", err.Error())
 	}
 }
 
@@ -283,7 +284,7 @@ func TestRetrieveScanListInvalidPageSize(t *testing.T) {
 	ss := initializeScanStore(t)
 
 	_, err := ss.List(&models.PaginationParams{Offset: 0, PageSize: 0})
-	if err.Error() != "Invalid page size" {
-		t.Errorf("Expected error 'Invalid page size'. Got '%v'\n", err.Error())
+	if err.Error() != "invalid page size" {
+		t.Errorf("Expected error 'invalid page size'. Got '%v'\n", err.Error())
 	}
 }

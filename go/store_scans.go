@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-memdb"
 	"github.com/UserProblem/reposcanner/models"
+	"github.com/hashicorp/go-memdb"
 )
 
 type ScanStore struct {
@@ -55,7 +55,7 @@ func NewScanStore() (*ScanStore, error) {
 
 	db, err := memdb.NewMemDB(schema)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot initialize db: %s", err.Error()))
+		return nil, fmt.Errorf("cannot initialize db: %s", err.Error())
 	}
 
 	return &ScanStore{DB: db, nextId: 1, total: 0}, nil
@@ -100,7 +100,7 @@ func (ss *ScanStore) Insert(si *models.ScanInfo) (*models.ScanRecord, error) {
 
 	if err := txn.Insert("scans", sr); err != nil {
 		txn.Abort()
-		return nil, errors.New(fmt.Sprintf("Error inserting data to the DB: %v\n", sr))
+		return nil, fmt.Errorf("error inserting data to the DB: %v", sr)
 	}
 	txn.Commit()
 	ss.total++
@@ -118,11 +118,11 @@ func (ss *ScanStore) Retrieve(id string) (*models.ScanRecord, error) {
 	raw, err := txn.First("scans", "id", id)
 	if err != nil {
 		txn.Abort()
-		return nil, errors.New(fmt.Sprintf("Error retrieving data from the DB. Id %v", id))
+		return nil, fmt.Errorf("error retrieving data from the DB. Id %v", id)
 	}
 
 	if raw == nil {
-		return nil, errors.New(fmt.Sprintf("Id %v does not exist.", id))
+		return nil, fmt.Errorf("id %v does not exist", id)
 	}
 
 	sr = raw.(models.ScanRecord)
@@ -132,18 +132,16 @@ func (ss *ScanStore) Retrieve(id string) (*models.ScanRecord, error) {
 // Delete an existing scan record from the data store.
 // Returns nil on success or an error on failure.
 func (ss *ScanStore) Delete(id string) error {
-	txn := ss.DB.Txn(false)
-
 	sr, err := ss.Retrieve(id)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
+		return fmt.Errorf("id not found: %v", err.Error())
 	}
 
-	txn = ss.DB.Txn(true)
+	txn := ss.DB.Txn(true)
 	err = txn.Delete("scans", sr)
 	if err != nil {
 		txn.Abort()
-		return errors.New(fmt.Sprintf("Failed to delete record: %v", err.Error()))
+		return fmt.Errorf("failed to delete record: %v", err.Error())
 	}
 
 	txn.Commit()
@@ -155,15 +153,14 @@ func (ss *ScanStore) Delete(id string) error {
 // Update an existing scan record in the data store.
 // Returns nil on success or an error on failure.
 func (ss *ScanStore) Update(sr *models.ScanRecord) error {
-	txn := ss.DB.Txn(false)
 	if _, err := ss.Retrieve(sr.Id); err != nil {
-		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
+		return fmt.Errorf("id not found: %v", err.Error())
 	}
 
-	txn = ss.DB.Txn(true)
+	txn := ss.DB.Txn(true)
 	if err := txn.Insert("scans", *(sr.Clone())); err != nil {
 		txn.Abort()
-		return errors.New("Update failed")
+		return errors.New("update failed")
 	}
 	txn.Commit()
 
@@ -176,11 +173,11 @@ func (ss *ScanStore) Update(sr *models.ScanRecord) error {
 // data store.
 func (ss *ScanStore) List(pp *models.PaginationParams) (*models.ScanList, error) {
 	if pp.Offset > ss.total {
-		return nil, errors.New("Invalid offset")
+		return nil, errors.New("invalid offset")
 	}
 
 	if pp.PageSize < 1 {
-		return nil, errors.New("Invalid page size")
+		return nil, errors.New("invalid page size")
 	}
 
 	sl := models.ScanList{
@@ -196,7 +193,7 @@ func (ss *ScanStore) List(pp *models.PaginationParams) (*models.ScanList, error)
 	txn := ss.DB.Txn(false)
 	it, err := txn.Get("scans", "id")
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot retrieve scan list: %v", err.Error()))
+		return nil, fmt.Errorf("cannot retrieve scan list: %v", err.Error())
 	}
 
 	for i := int32(0); i < pp.Offset; i++ {

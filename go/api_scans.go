@@ -19,8 +19,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/UserProblem/reposcanner/models"
+	"github.com/gorilla/mux"
 )
 
 func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +68,7 @@ func (a *App) DeleteScan(w http.ResponseWriter, r *http.Request) {
 	// TODO TODO TODO TODO cancel ongoing scan
 
 	if err := a.ScanStore.Delete(id); err != nil {
-		if !strings.HasPrefix(err.Error(), "Id not found") {
+		if !strings.HasPrefix(err.Error(), "id not found") {
 			log.Printf("Failed to delete scan from the data store: %v\n", err.Error())
 			respondWithError(w, http.StatusInternalServerError, "failed to delete scan")
 		} else {
@@ -128,7 +128,7 @@ func (a *App) ListScans(w http.ResponseWriter, r *http.Request) {
 
 	sl, err := a.ScanStore.List(&pp)
 	if err != nil {
-		if err.Error() == "Invalid offset" || err.Error() == "Invalid page size" {
+		if err.Error() == "invalid offset" || err.Error() == "invalid page size" {
 			respondWithError(w, http.StatusNotFound, "parameters out-of-bounds")
 		} else {
 			log.Printf("Failed to retrieve scan list: %v", err.Error())

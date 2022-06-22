@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-memdb"
 	"github.com/UserProblem/reposcanner/models"
+	"github.com/hashicorp/go-memdb"
 )
 
 type RepoStore struct {
@@ -45,7 +45,7 @@ func NewRepoStore() (*RepoStore, error) {
 
 	db, err := memdb.NewMemDB(schema)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot initialize db: %s", err.Error()))
+		return nil, fmt.Errorf("cannot initialize db: %s", err.Error())
 	}
 
 	return &RepoStore{DB: db, nextId: 1, total: 0}, nil
@@ -70,7 +70,7 @@ func (rs *RepoStore) Insert(ri *models.RepositoryInfo) (*models.RepositoryRecord
 
 	if err := txn.Insert("repositories", rr); err != nil {
 		txn.Abort()
-		return nil, errors.New(fmt.Sprintf("Error inserting data to the DB: %v\n", rr))
+		return nil, fmt.Errorf("error inserting data to the DB: %v", rr)
 	}
 	txn.Commit()
 	rs.total++
@@ -88,11 +88,11 @@ func (rs *RepoStore) Retrieve(id int64) (*models.RepositoryRecord, error) {
 	raw, err := txn.First("repositories", "id", id)
 	if err != nil {
 		txn.Abort()
-		return nil, errors.New(fmt.Sprintf("Error retrieving data from the DB. Id %v", id))
+		return nil, fmt.Errorf("error retrieving data from the DB. Id %v", id)
 	}
 
 	if raw == nil {
-		return nil, errors.New(fmt.Sprintf("Id %v does not exist.", id))
+		return nil, fmt.Errorf("id %v does not exist", id)
 	}
 
 	rr = raw.(models.RepositoryRecord)
@@ -102,18 +102,16 @@ func (rs *RepoStore) Retrieve(id int64) (*models.RepositoryRecord, error) {
 // Delete an existing repository record from the data store.
 // Returns nil on success or an error on failure.
 func (rs *RepoStore) Delete(id int64) error {
-	txn := rs.DB.Txn(false)
-
 	rr, err := rs.Retrieve(id)
 	if err != nil {
-		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
+		return fmt.Errorf("id not found: %v", err.Error())
 	}
 
-	txn = rs.DB.Txn(true)
+	txn := rs.DB.Txn(true)
 	err = txn.Delete("repositories", rr)
 	if err != nil {
 		txn.Abort()
-		return errors.New(fmt.Sprintf("Failed to delete record: %v", err.Error()))
+		return fmt.Errorf("failed to delete record: %v", err.Error())
 	}
 
 	txn.Commit()
@@ -125,15 +123,14 @@ func (rs *RepoStore) Delete(id int64) error {
 // Update an existing repository record in the data store.
 // Returns nil on success or an error on failure.
 func (rs *RepoStore) Update(rr *models.RepositoryRecord) error {
-	txn := rs.DB.Txn(false)
 	if _, err := rs.Retrieve(rr.Id); err != nil {
-		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
+		return fmt.Errorf("id not found: %v", err.Error())
 	}
 
-	txn = rs.DB.Txn(true)
+	txn := rs.DB.Txn(true)
 	if err := txn.Insert("repositories", *(rr.Clone())); err != nil {
 		txn.Abort()
-		return errors.New("Update failed")
+		return errors.New("update failed")
 	}
 	txn.Commit()
 
@@ -146,11 +143,11 @@ func (rs *RepoStore) Update(rr *models.RepositoryRecord) error {
 // data store.
 func (rs *RepoStore) List(pp *models.PaginationParams) (*models.RepositoryList, error) {
 	if pp.Offset > rs.total {
-		return nil, errors.New("Invalid offset")
+		return nil, errors.New("invalid offset")
 	}
 
 	if pp.PageSize < 1 {
-		return nil, errors.New("Invalid page size")
+		return nil, errors.New("invalid page size")
 	}
 
 	rl := models.RepositoryList{
@@ -166,7 +163,7 @@ func (rs *RepoStore) List(pp *models.PaginationParams) (*models.RepositoryList, 
 	txn := rs.DB.Txn(false)
 	it, err := txn.Get("repositories", "id")
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Cannot retrieve repository list: %v", err.Error()))
+		return nil, fmt.Errorf("cannot retrieve repository list: %v", err.Error())
 	}
 
 	for i := int32(0); i < pp.Offset; i++ {

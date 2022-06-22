@@ -40,6 +40,22 @@ func setupControllerTests() (*engine.Controller, *DummyScanner) {
 	return &c, o
 }
 
+func TestNewJobsHaveDifferentIds(t *testing.T) {
+	c, _ := setupControllerTests()
+
+	ri := models.DefaultRepositoryInfo()
+	job1 := c.AddJob(ri)
+	job2 := c.AddJob(ri.Clone())
+
+	if job1 == nil || job2 == nil {
+		t.Fatalf("Could not add job to the queue.")
+	}
+
+	if job1.Id == job2.Id {
+		t.Errorf("Expected new jobs will have different ids. Got %v, %v\n", job1.Id, job2.Id)
+	}
+}
+
 func TestAddJobAddsToIncomingChannel(t *testing.T) {
 	c, _ := setupControllerTests()
 

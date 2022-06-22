@@ -54,6 +54,7 @@ func (c *Controller) generateJobIds() {
 	nextId := uint64(0)
 	for {
 		c.nextJobId <- encodeJobId(uint64(nextId))
+		nextId++
 	}
 }
 

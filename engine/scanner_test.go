@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/UserProblem/reposcanner/engine"
-	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func setupScannerTests(limit int) *engine.Scanner {
@@ -22,7 +22,7 @@ func TestScannerWorksOnJob(t *testing.T) {
 
 	j := &engine.Job{
 		Id:     "A",
-		Repo:   sw.DefaultRepositoryInfo(),
+		Repo:   models.DefaultRepositoryInfo(),
 		Result: results,
 	}
 
@@ -55,7 +55,7 @@ func TestStartScanRejectsDuplicateJobIds(t *testing.T) {
 
 	j := &engine.Job{
 		Id:     "A",
-		Repo:   sw.DefaultRepositoryInfo(),
+		Repo:   models.DefaultRepositoryInfo(),
 		Result: make(chan *engine.JobUpdate),
 	}
 
@@ -65,7 +65,7 @@ func TestStartScanRejectsDuplicateJobIds(t *testing.T) {
 	results := make(chan *engine.JobUpdate)
 	j = &engine.Job{
 		Id:     "A",
-		Repo:   sw.DefaultRepositoryInfo(),
+		Repo:   models.DefaultRepositoryInfo(),
 		Result: results,
 	}
 
@@ -96,7 +96,7 @@ func TestScannerWorkHandlesCancellation(t *testing.T) {
 
 	j := &engine.Job{
 		Id:     "A",
-		Repo:   sw.DefaultRepositoryInfo(),
+		Repo:   models.DefaultRepositoryInfo(),
 		Result: results,
 	}
 

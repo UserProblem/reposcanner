@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func initializeRepoStore(t *testing.T) *sw.RepoStore {
@@ -35,7 +36,7 @@ func TestNextIdIncrements(t *testing.T) {
 func TestStoreNewRepositoryInfo(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	rr, err := rs.Insert(ri)
 
 	if err != nil {
@@ -62,7 +63,7 @@ func TestStoreNewRepositoryInfo(t *testing.T) {
 func TestRetrieveRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	rr, err := rs.Insert(ri)
 
 	if err != nil {
@@ -102,7 +103,7 @@ func TestRetrieveInvalidRepositoryRecord(t *testing.T) {
 func TestDeleteRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	_, err := rs.Insert(ri)
 
 	if err != nil {
@@ -134,16 +135,16 @@ func TestDeleteInvalidRepositoryRecord(t *testing.T) {
 func TestUpdateRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 
 	rrOrig, err := rs.Insert(ri)
 	if err != nil {
 		t.Fatalf("Failed to insert repository info into the database.\n")
 	}
 
-	rrMod := &sw.RepositoryRecord{
+	rrMod := &models.RepositoryRecord{
 		Id: rrOrig.Id,
-		Info: &sw.RepositoryInfo{
+		Info: &models.RepositoryInfo{
 			Name:   "modified repo",
 			Url:    "modified url",
 			Branch: "modified",
@@ -175,9 +176,9 @@ func TestUpdateRepositoryRecord(t *testing.T) {
 func TestUpdateInvalidRepositoryRecord(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	rr := sw.RepositoryRecord{
+	rr := models.RepositoryRecord{
 		Id:   1,
-		Info: sw.DefaultRepositoryInfo(),
+		Info: models.DefaultRepositoryInfo(),
 	}
 
 	if err := rs.Update(&rr); err == nil {
@@ -188,12 +189,12 @@ func TestUpdateInvalidRepositoryRecord(t *testing.T) {
 func TestRetrieveRepositoryList(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	var ri *sw.RepositoryInfo
+	var ri *models.RepositoryInfo
 	var err error
 
 	var totalRecords, i int32 = 10, 1
 	for ; i <= totalRecords; i++ {
-		ri = sw.DefaultRepositoryInfo()
+		ri = models.DefaultRepositoryInfo()
 		ri.Name = ri.Name + fmt.Sprintf(" %v", i)
 		ri.Url = ri.Url + fmt.Sprintf(" %v", i)
 
@@ -202,7 +203,7 @@ func TestRetrieveRepositoryList(t *testing.T) {
 		}
 	}
 
-	rl, err := rs.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
+	rl, err := rs.List(&models.PaginationParams{Offset: 2, PageSize: 5})
 	if err != nil {
 		t.Fatalf("Failed to retrieve repository list: %v", err.Error())
 	}
@@ -245,7 +246,7 @@ func TestRetrieveRepositoryList(t *testing.T) {
 func TestRetrieveEmptyRepositoryList(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	rl, err := rs.List(&sw.PaginationParams{Offset: 0, PageSize: 20})
+	rl, err := rs.List(&models.PaginationParams{Offset: 0, PageSize: 20})
 	if err != nil {
 		t.Fatalf("Expected successful operation. Got error: %v\n", err.Error())
 	}
@@ -262,7 +263,7 @@ func TestRetrieveEmptyRepositoryList(t *testing.T) {
 func TestRetrieveRepositoryListInvalidOffset(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	_, err := rs.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
+	_, err := rs.List(&models.PaginationParams{Offset: 2, PageSize: 5})
 	if err.Error() != "Invalid offset" {
 		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())
 	}
@@ -271,7 +272,7 @@ func TestRetrieveRepositoryListInvalidOffset(t *testing.T) {
 func TestRetrieveRepositoryListInvalidPageSize(t *testing.T) {
 	rs := initializeRepoStore(t)
 
-	_, err := rs.List(&sw.PaginationParams{Offset: 0, PageSize: 0})
+	_, err := rs.List(&models.PaginationParams{Offset: 0, PageSize: 0})
 	if err.Error() != "Invalid page size" {
 		t.Errorf("Expected error 'Invalid page size'. Got '%v'\n", err.Error())
 	}

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/UserProblem/reposcanner/engine"
-	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 type DummyScanner struct {
@@ -43,7 +43,7 @@ func setupControllerTests() (*engine.Controller, *DummyScanner) {
 func TestAddJobAddsToIncomingChannel(t *testing.T) {
 	c, _ := setupControllerTests()
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
 	if job == nil {
 		t.Fatalf("Could not add job to the queue.")
@@ -64,7 +64,7 @@ func TestAddJobAddsToIncomingChannel(t *testing.T) {
 func TestRunOnceHandlesJobFromIncomingChannel(t *testing.T) {
 	c, o := setupControllerTests()
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
 
 	c.RunOnce()
@@ -84,7 +84,7 @@ func TestRunOnceHandlesJobFromIncomingChannel(t *testing.T) {
 func TestRemoveJobAddsToCancellingChannel(t *testing.T) {
 	c, _ := setupControllerTests()
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
 	if job == nil {
 		t.Fatalf("Could not add job to the queue.")
@@ -107,7 +107,7 @@ func TestRemoveJobAddsToCancellingChannel(t *testing.T) {
 func TestRunOnceHandlesJobFromCancellingChannel(t *testing.T) {
 	c, o := setupControllerTests()
 
-	ri := sw.DefaultRepositoryInfo()
+	ri := models.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
 
 	c.RunOnce()

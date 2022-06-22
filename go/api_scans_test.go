@@ -2,22 +2,23 @@ package swagger_test
 
 import (
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
 	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func addDummyScanRecords(t *testing.T, n int) {
 	for i := 1; i <= n; i++ {
-		si := sw.ScanInfo{
-			RepoId: int64(i),
-			QueuedAt: fmt.Sprintf("1970-01-01 00:%02d:00+0", i),
+		si := models.ScanInfo{
+			RepoId:     int64(i),
+			QueuedAt:   fmt.Sprintf("1970-01-01 00:%02d:00+0", i),
 			ScanningAt: "",
 			FinishedAt: "",
-			Status: "QUEUED",
+			Status:     "QUEUED",
 		}
 
 		if _, err := app.ScanStore.Insert(&si); err != nil {
@@ -35,7 +36,7 @@ func TestAddScan(t *testing.T) {
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
-	var body sw.ApiResponse
+	var body models.ApiResponse
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -102,7 +103,7 @@ func TestGetScan(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.ScanResults
+	var body models.ScanResults
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -167,7 +168,7 @@ func TestDeleteScan(t *testing.T) {
 		t.Errorf("Expected no body in response\n")
 	}
 
-	sl, err := app.ScanStore.List(&sw.PaginationParams{Offset: 0, PageSize: 10})
+	sl, err := app.ScanStore.List(&models.PaginationParams{Offset: 0, PageSize: 10})
 	if err != nil {
 		t.Fatalf("Could not retrieve repository list\n")
 	}
@@ -208,7 +209,7 @@ func TestGetNoScans(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.ScanList
+	var body models.ScanList
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -234,14 +235,14 @@ func TestGetScanList(t *testing.T) {
 	app.ClearStores()
 	addDummyScanRecords(t, 10)
 
-	pp := sw.PaginationParams{Offset: 2, PageSize: 5}
+	pp := models.PaginationParams{Offset: 2, PageSize: 5}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/scans", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.ScanList
+	var body models.ScanList
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -284,7 +285,7 @@ func TestGetScanListInvalidOffset(t *testing.T) {
 	app.ClearStores()
 	addDummyScanRecords(t, 5)
 
-	pp := sw.PaginationParams{Offset: 6, PageSize: 5}
+	pp := models.PaginationParams{Offset: 6, PageSize: 5}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/scans", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
@@ -296,7 +297,7 @@ func TestGetScanListInvalidPageSize(t *testing.T) {
 	app.ClearStores()
 	addDummyScanRecords(t, 5)
 
-	pp := sw.PaginationParams{Offset: 0, PageSize: 0}
+	pp := models.PaginationParams{Offset: 0, PageSize: 0}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/scans", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)

@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"testing"
 
-	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func addDummyRepoRecords(t *testing.T, n int) {
 	for i := 1; i <= n; i++ {
-		ri := sw.RepositoryInfo{
+		ri := models.RepositoryInfo{
 			Name:   "repo name " + strconv.Itoa(i),
 			Url:    "http://example.com/repo/" + strconv.Itoa(i),
 			Branch: "main",
@@ -32,7 +32,7 @@ func TestGetNoRepositories(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.RepositoryList
+	var body models.RepositoryList
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -58,14 +58,14 @@ func TestGetRepositoryList(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 10)
 
-	pp := sw.PaginationParams{Offset: 2, PageSize: 5}
+	pp := models.PaginationParams{Offset: 2, PageSize: 5}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/repositories", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.RepositoryList
+	var body models.RepositoryList
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -108,7 +108,7 @@ func TestGetRepositoryListInvalidOffset(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 5)
 
-	pp := sw.PaginationParams{Offset: 6, PageSize: 5}
+	pp := models.PaginationParams{Offset: 6, PageSize: 5}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/repositories", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
@@ -120,7 +120,7 @@ func TestGetRepositoryListInvalidPageSize(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 5)
 
-	pp := sw.PaginationParams{Offset: 0, PageSize: 0}
+	pp := models.PaginationParams{Offset: 0, PageSize: 0}
 	reqBody, _ := json.Marshal(pp)
 	req, _ := http.NewRequest("GET", api_version+"/repositories", bytes.NewBuffer(reqBody))
 	response := executeRequest(req)
@@ -131,7 +131,7 @@ func TestGetRepositoryListInvalidPageSize(t *testing.T) {
 func TestPostNewRepository(t *testing.T) {
 	app.ClearStores()
 
-	newRepo := sw.DefaultRepositoryInfo()
+	newRepo := models.DefaultRepositoryInfo()
 	reqBody, _ := json.Marshal(newRepo)
 
 	req, _ := http.NewRequest("POST", api_version+"/repository", bytes.NewBuffer(reqBody))
@@ -139,7 +139,7 @@ func TestPostNewRepository(t *testing.T) {
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
-	var body sw.ApiResponse
+	var body models.ApiResponse
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -157,7 +157,7 @@ func TestPostNewRepository(t *testing.T) {
 func TestPostNewRepositoryUnspecifiedBranch(t *testing.T) {
 	app.ClearStores()
 
-	newRepo := &sw.RepositoryInfo{
+	newRepo := &models.RepositoryInfo{
 		Name: "repo name",
 		Url:  "http://example.com/repo",
 	}
@@ -168,7 +168,7 @@ func TestPostNewRepositoryUnspecifiedBranch(t *testing.T) {
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
-	var body sw.ApiResponse
+	var body models.ApiResponse
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -205,7 +205,7 @@ func TestPostNewRepositoryInvalidBody(t *testing.T) {
 func TestPostNewRepositoryInvalidUrl(t *testing.T) {
 	app.ClearStores()
 
-	newRepo := &sw.RepositoryInfo{
+	newRepo := &models.RepositoryInfo{
 		Name: "repo name",
 		Url:  "http//invalid/url",
 	}
@@ -226,7 +226,7 @@ func TestGetRepository(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.RepositoryRecord
+	var body models.RepositoryRecord
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -283,7 +283,7 @@ func TestModifyRepository(t *testing.T) {
 		t.Errorf("Expected branch to be 'main'. Got '%v'\n", rr.Info.Branch)
 	}
 
-	modifiedRepo := sw.RepositoryInfo{
+	modifiedRepo := models.RepositoryInfo{
 		Name:   "modified repo name",
 		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
@@ -295,7 +295,7 @@ func TestModifyRepository(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var body sw.ApiResponse
+	var body models.ApiResponse
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
 		t.Fatalf("Invalid JSON received as response body.")
 	}
@@ -331,7 +331,7 @@ func TestModifyRepositoryInvalidId(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 2)
 
-	modifiedRepo := sw.RepositoryInfo{
+	modifiedRepo := models.RepositoryInfo{
 		Name:   "modified repo name",
 		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
@@ -369,7 +369,7 @@ func TestModifyRepositoryInvalidUrl(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 2)
 
-	modifiedRepo := sw.RepositoryInfo{
+	modifiedRepo := models.RepositoryInfo{
 		Name:   "modified repo name",
 		Url:    "http://invalid repo/modified",
 		Branch: "modified",
@@ -386,7 +386,7 @@ func TestModifyRepositoryNonExistentId(t *testing.T) {
 	app.ClearStores()
 	addDummyRepoRecords(t, 2)
 
-	modifiedRepo := sw.RepositoryInfo{
+	modifiedRepo := models.RepositoryInfo{
 		Name:   "modified repo name",
 		Url:    "http://example.com/repo/modified",
 		Branch: "modified",
@@ -412,7 +412,7 @@ func TestDeleteRepository(t *testing.T) {
 		t.Errorf("Expected no body in response\n")
 	}
 
-	rl, err := app.RepoStore.List(&sw.PaginationParams{Offset: 0, PageSize: 10})
+	rl, err := app.RepoStore.List(&models.PaginationParams{Offset: 0, PageSize: 10})
 	if err != nil {
 		t.Fatalf("Could not retrieve repository list\n")
 	}

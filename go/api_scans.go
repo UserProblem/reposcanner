@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
@@ -35,11 +36,11 @@ func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	si := DefaultScanInfo()
+	si := models.DefaultScanInfo()
 	si.RepoId = int64(id)
 	si.QueuedAt = currentTimestamptz()
 
-	var sr *ScanRecord
+	var sr *models.ScanRecord
 	sr, err = a.ScanStore.Insert(si)
 	if err != nil {
 		log.Printf("Failed to add scan to the data store: %v\n", err.Error())
@@ -48,7 +49,7 @@ func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := &ApiResponse{
+	body := &models.ApiResponse{
 		Id:      0,
 		Message: sr.Id,
 	}
@@ -93,10 +94,10 @@ func (a *App) GetScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sres := &ScanResults{
+	sres := &models.ScanResults{
 		Id:       sr.Id,
 		Info:     sr.Info,
-		Findings: make([]FindingsInfo, 0),
+		Findings: make([]models.FindingsInfo, 0),
 	}
 
 	// TODO TODO TODO add findings
@@ -105,7 +106,7 @@ func (a *App) GetScan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) ListScans(w http.ResponseWriter, r *http.Request) {
-	var pp PaginationParams
+	var pp models.PaginationParams
 	if r.Body != nil {
 		contents, _ := ioutil.ReadAll(r.Body)
 		if strings.TrimSpace(string(contents)) == "" {
@@ -122,7 +123,7 @@ func (a *App) ListScans(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		pp = PaginationParams{Offset: 0, PageSize: 20}
+		pp = models.PaginationParams{Offset: 0, PageSize: 20}
 	}
 
 	sl, err := a.ScanStore.List(&pp)

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 type Scanner struct {
@@ -106,17 +106,17 @@ func (s *Scanner) Work(id string) {
 	}
 
 	// Send results
-	findings := []sw.FindingsInfo{
+	findings := []models.FindingsInfo{
 		{
 			Type_:  "sast",
 			RuleId: "G001",
-			Location: &sw.FindingsLocation{
+			Location: &models.FindingsLocation{
 				Path: "hello.go",
-				Positions: &sw.FileLocation{
+				Positions: &models.FileLocation{
 					Begin: struct{ line int32 }{line: 21},
 				},
 			},
-			Metadata: &sw.FindingsMetadata{
+			Metadata: &models.FindingsMetadata{
 				Description: "Hard-coded secret - public key",
 				Severity:    "HIGH",
 			},
@@ -124,14 +124,14 @@ func (s *Scanner) Work(id string) {
 		{
 			Type_:  "sast",
 			RuleId: "G002",
-			Location: &sw.FindingsLocation{
+			Location: &models.FindingsLocation{
 				Path: "world.go",
-				Positions: &sw.FileLocation{
+				Positions: &models.FileLocation{
 					Begin: struct{ line int32 }{line: 41},
 					End:   struct{ line int32 }{line: 43},
 				},
 			},
-			Metadata: &sw.FindingsMetadata{
+			Metadata: &models.FindingsMetadata{
 				Description: "Hard-coded secret - private key",
 				Severity:    "HIGH",
 			},

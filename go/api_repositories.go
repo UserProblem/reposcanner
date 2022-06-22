@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +30,7 @@ func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ri RepositoryInfo
+	var ri models.RepositoryInfo
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&ri); err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
@@ -53,7 +54,7 @@ func (a *App) AddRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := &ApiResponse{
+	body := &models.ApiResponse{
 		Id:      rr.Id,
 		Message: "repository created successfully",
 	}
@@ -89,7 +90,7 @@ func (a *App) GetRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var rr *RepositoryRecord
+	var rr *models.RepositoryRecord
 	rr, err = a.RepoStore.Retrieve(int64(id))
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "repository id not found")
@@ -100,7 +101,7 @@ func (a *App) GetRepository(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
-	var pp PaginationParams
+	var pp models.PaginationParams
 	if r.Body != nil {
 		contents, _ := ioutil.ReadAll(r.Body)
 		if strings.TrimSpace(string(contents)) == "" {
@@ -117,7 +118,7 @@ func (a *App) ListRepositories(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		pp = PaginationParams{Offset: 0, PageSize: 20}
+		pp = models.PaginationParams{Offset: 0, PageSize: 20}
 	}
 
 	rl, err := a.RepoStore.List(&pp)
@@ -148,7 +149,7 @@ func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ri RepositoryInfo
+	var ri models.RepositoryInfo
 	decoder := json.NewDecoder(r.Body)
 	if err = decoder.Decode(&ri); err != nil {
 		respondWithError(w, http.StatusBadRequest, "invalid request body")
@@ -160,7 +161,7 @@ func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rr := RepositoryRecord{Id: int64(id), Info: &ri}
+	rr := models.RepositoryRecord{Id: int64(id), Info: &ri}
 	if err = a.RepoStore.Update(&rr); err != nil {
 		if strings.HasPrefix(err.Error(), "Id not found") {
 			respondWithError(w, http.StatusNotFound, "repository id not found")
@@ -172,7 +173,7 @@ func (a *App) ModifyRepository(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := &ApiResponse{
+	body := &models.ApiResponse{
 		Id:      rr.Id,
 		Message: "repository modified successfully",
 	}

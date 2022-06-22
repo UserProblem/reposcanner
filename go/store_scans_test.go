@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 func initializeScanStore(t *testing.T) *sw.ScanStore {
@@ -34,7 +35,7 @@ func TestNextScanIdIncrements(t *testing.T) {
 func TestStoreNewScanInfo(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	si := sw.DefaultScanInfo()
+	si := models.DefaultScanInfo()
 	sr, err := ss.Insert(si)
 
 	if err != nil {
@@ -69,7 +70,7 @@ func TestStoreNewScanInfo(t *testing.T) {
 func TestRetrieveScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	si := sw.DefaultScanInfo()
+	si := models.DefaultScanInfo()
 	sr, err := ss.Insert(si)
 
 	if err != nil {
@@ -119,7 +120,7 @@ func TestRetrieveInvalidScanRecord(t *testing.T) {
 func TestDeleteScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	si := sw.DefaultScanInfo()
+	si := models.DefaultScanInfo()
 	_, err := ss.Insert(si)
 
 	if err != nil {
@@ -152,16 +153,16 @@ func TestDeleteInvalidScanRecord(t *testing.T) {
 func TestUpdateScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	si := sw.DefaultScanInfo()
+	si := models.DefaultScanInfo()
 
 	ssOrig, err := ss.Insert(si)
 	if err != nil {
 		t.Fatalf("Failed to insert scan info into the database.\n")
 	}
 
-	ssMod := &sw.ScanRecord{
+	ssMod := &models.ScanRecord{
 		Id: ssOrig.Id,
-		Info: &sw.ScanInfo{
+		Info: &models.ScanInfo{
 			RepoId:     ssOrig.Info.RepoId,
 			QueuedAt:   ssOrig.Info.QueuedAt,
 			ScanningAt: "1970-01-01 00:00:01+0",
@@ -195,9 +196,9 @@ func TestUpdateScanRecord(t *testing.T) {
 func TestUpdateInvalidScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	sr := sw.ScanRecord{
+	sr := models.ScanRecord{
 		Id:   sw.EncodeScanId(1),
-		Info: sw.DefaultScanInfo(),
+		Info: models.DefaultScanInfo(),
 	}
 
 	if err := ss.Update(&sr); err == nil {
@@ -208,12 +209,12 @@ func TestUpdateInvalidScanRecord(t *testing.T) {
 func TestRetrieveScanList(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	var si *sw.ScanInfo
+	var si *models.ScanInfo
 	var err error
 
 	var totalRecords, i int32 = 10, 1
 	for ; i <= totalRecords; i++ {
-		si = sw.DefaultScanInfo()
+		si = models.DefaultScanInfo()
 		si.RepoId = int64(i)
 
 		if _, err = ss.Insert(si); err != nil {
@@ -221,7 +222,7 @@ func TestRetrieveScanList(t *testing.T) {
 		}
 	}
 
-	sl, err := ss.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
+	sl, err := ss.List(&models.PaginationParams{Offset: 2, PageSize: 5})
 	if err != nil {
 		t.Fatalf("Failed to retrieve scan list: %v", err.Error())
 	}
@@ -255,7 +256,7 @@ func TestRetrieveScanList(t *testing.T) {
 func TestRetrieveEmptyScanList(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	sl, err := ss.List(&sw.PaginationParams{Offset: 0, PageSize: 20})
+	sl, err := ss.List(&models.PaginationParams{Offset: 0, PageSize: 20})
 	if err != nil {
 		t.Fatalf("Expected successful operation. Got error: %v\n", err.Error())
 	}
@@ -272,7 +273,7 @@ func TestRetrieveEmptyScanList(t *testing.T) {
 func TestRetrieveScanListInvalidOffset(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	_, err := ss.List(&sw.PaginationParams{Offset: 2, PageSize: 5})
+	_, err := ss.List(&models.PaginationParams{Offset: 2, PageSize: 5})
 	if err.Error() != "Invalid offset" {
 		t.Errorf("Expected error 'Invalid offset'. Got '%v'\n", err.Error())
 	}
@@ -281,7 +282,7 @@ func TestRetrieveScanListInvalidOffset(t *testing.T) {
 func TestRetrieveScanListInvalidPageSize(t *testing.T) {
 	ss := initializeScanStore(t)
 
-	_, err := ss.List(&sw.PaginationParams{Offset: 0, PageSize: 0})
+	_, err := ss.List(&models.PaginationParams{Offset: 0, PageSize: 0})
 	if err.Error() != "Invalid page size" {
 		t.Errorf("Expected error 'Invalid page size'. Got '%v'\n", err.Error())
 	}

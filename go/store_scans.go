@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-memdb"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 type ScanStore struct {
@@ -89,10 +90,10 @@ func ValidScanId(s string) bool {
 
 // Add a new scan record to the data store. Returns a pointer
 // to the newly added scan record or nil and an error on failure.
-func (ss *ScanStore) Insert(si *ScanInfo) (*ScanRecord, error) {
+func (ss *ScanStore) Insert(si *models.ScanInfo) (*models.ScanRecord, error) {
 	txn := ss.DB.Txn(true)
 
-	sr := ScanRecord{
+	sr := models.ScanRecord{
 		Id:   ss.NextId(),
 		Info: si.Clone(),
 	}
@@ -110,8 +111,8 @@ func (ss *ScanStore) Insert(si *ScanInfo) (*ScanRecord, error) {
 // Retrieve an existing scan record from the data store.
 // Returns a pointer to a copy of the retrieved scan record
 // or nil and an error on failure.
-func (ss *ScanStore) Retrieve(id string) (*ScanRecord, error) {
-	var sr ScanRecord
+func (ss *ScanStore) Retrieve(id string) (*models.ScanRecord, error) {
+	var sr models.ScanRecord
 
 	txn := ss.DB.Txn(false)
 	raw, err := txn.First("scans", "id", id)
@@ -124,7 +125,7 @@ func (ss *ScanStore) Retrieve(id string) (*ScanRecord, error) {
 		return nil, errors.New(fmt.Sprintf("Id %v does not exist.", id))
 	}
 
-	sr = raw.(ScanRecord)
+	sr = raw.(models.ScanRecord)
 	return sr.Clone(), nil
 }
 
@@ -153,7 +154,7 @@ func (ss *ScanStore) Delete(id string) error {
 
 // Update an existing scan record in the data store.
 // Returns nil on success or an error on failure.
-func (ss *ScanStore) Update(sr *ScanRecord) error {
+func (ss *ScanStore) Update(sr *models.ScanRecord) error {
 	txn := ss.DB.Txn(false)
 	if _, err := ss.Retrieve(sr.Id); err != nil {
 		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
@@ -173,7 +174,7 @@ func (ss *ScanStore) Update(sr *ScanRecord) error {
 // parameters. It will return a maximum of page size repository
 // records while skipping offset-1 records from the start of the
 // data store.
-func (ss *ScanStore) List(pp *PaginationParams) (*ScanList, error) {
+func (ss *ScanStore) List(pp *models.PaginationParams) (*models.ScanList, error) {
 	if pp.Offset > ss.total {
 		return nil, errors.New("Invalid offset")
 	}
@@ -182,10 +183,10 @@ func (ss *ScanStore) List(pp *PaginationParams) (*ScanList, error) {
 		return nil, errors.New("Invalid page size")
 	}
 
-	sl := ScanList{
+	sl := models.ScanList{
 		Total:      ss.total,
 		Pagination: pp.Clone(),
-		Items:      make([]ScanRecord, 0),
+		Items:      make([]models.ScanRecord, 0),
 	}
 
 	if ss.total == 0 {
@@ -208,7 +209,7 @@ func (ss *ScanStore) List(pp *PaginationParams) (*ScanList, error) {
 	}
 
 	for i := int32(0); i < limit; i++ {
-		sr := it.Next().(ScanRecord)
+		sr := it.Next().(models.ScanRecord)
 		sl.Items = append(sl.Items, *sr.Clone())
 	}
 

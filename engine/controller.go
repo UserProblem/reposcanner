@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"log"
 
-	sw "github.com/UserProblem/reposcanner/go"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 type Controller struct {
@@ -20,13 +20,13 @@ type Controller struct {
 
 type Job struct {
 	Id     string
-	Repo   *sw.RepositoryInfo
+	Repo   *models.RepositoryInfo
 	Result chan *JobUpdate
 }
 
 type JobUpdate struct {
 	Status   string
-	Findings *[]sw.FindingsInfo
+	Findings *[]models.FindingsInfo
 }
 
 type ScanHandler interface {
@@ -104,7 +104,7 @@ func (c *Controller) Stop() {
 // API to allow users to add jobs to the controller queue. Returns a
 // Job struct containing the identifier for the queued job, as well as
 // the results channel where the output will be sent.
-func (c *Controller) AddJob(ri *sw.RepositoryInfo) *Job {
+func (c *Controller) AddJob(ri *models.RepositoryInfo) *Job {
 	log.Printf("Received request to scan '%v'\n", ri.Name)
 
 	job := Job{

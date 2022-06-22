@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-memdb"
+	"github.com/UserProblem/reposcanner/models"
 )
 
 type RepoStore struct {
@@ -59,10 +60,10 @@ func (rs *RepoStore) NextId() int64 {
 
 // Add a new repository record to the data store. Returns a pointer
 // to the newly added repository record or nil and an error on failure.
-func (rs *RepoStore) Insert(ri *RepositoryInfo) (*RepositoryRecord, error) {
+func (rs *RepoStore) Insert(ri *models.RepositoryInfo) (*models.RepositoryRecord, error) {
 	txn := rs.DB.Txn(true)
 
-	rr := RepositoryRecord{
+	rr := models.RepositoryRecord{
 		Id:   rs.NextId(),
 		Info: ri.Clone(),
 	}
@@ -80,8 +81,8 @@ func (rs *RepoStore) Insert(ri *RepositoryInfo) (*RepositoryRecord, error) {
 // Retrieve an existing repository record from the data store.
 // Returns a pointer to a copy of the retrieved repository record
 // or nil and an error on failure.
-func (rs *RepoStore) Retrieve(id int64) (*RepositoryRecord, error) {
-	var rr RepositoryRecord
+func (rs *RepoStore) Retrieve(id int64) (*models.RepositoryRecord, error) {
+	var rr models.RepositoryRecord
 
 	txn := rs.DB.Txn(false)
 	raw, err := txn.First("repositories", "id", id)
@@ -94,7 +95,7 @@ func (rs *RepoStore) Retrieve(id int64) (*RepositoryRecord, error) {
 		return nil, errors.New(fmt.Sprintf("Id %v does not exist.", id))
 	}
 
-	rr = raw.(RepositoryRecord)
+	rr = raw.(models.RepositoryRecord)
 	return rr.Clone(), nil
 }
 
@@ -123,7 +124,7 @@ func (rs *RepoStore) Delete(id int64) error {
 
 // Update an existing repository record in the data store.
 // Returns nil on success or an error on failure.
-func (rs *RepoStore) Update(rr *RepositoryRecord) error {
+func (rs *RepoStore) Update(rr *models.RepositoryRecord) error {
 	txn := rs.DB.Txn(false)
 	if _, err := rs.Retrieve(rr.Id); err != nil {
 		return errors.New(fmt.Sprintf("Id not found: %v", err.Error()))
@@ -143,7 +144,7 @@ func (rs *RepoStore) Update(rr *RepositoryRecord) error {
 // parameters. It will return a maximum of page size repository
 // records while skipping offset-1 records from the start of the
 // data store.
-func (rs *RepoStore) List(pp *PaginationParams) (*RepositoryList, error) {
+func (rs *RepoStore) List(pp *models.PaginationParams) (*models.RepositoryList, error) {
 	if pp.Offset > rs.total {
 		return nil, errors.New("Invalid offset")
 	}
@@ -152,10 +153,10 @@ func (rs *RepoStore) List(pp *PaginationParams) (*RepositoryList, error) {
 		return nil, errors.New("Invalid page size")
 	}
 
-	rl := RepositoryList{
+	rl := models.RepositoryList{
 		Total:      rs.total,
 		Pagination: pp.Clone(),
-		Items:      make([]RepositoryRecord, 0),
+		Items:      make([]models.RepositoryRecord, 0),
 	}
 
 	if rs.total == 0 {
@@ -178,7 +179,7 @@ func (rs *RepoStore) List(pp *PaginationParams) (*RepositoryList, error) {
 	}
 
 	for i := int32(0); i < limit; i++ {
-		rr := it.Next().(RepositoryRecord)
+		rr := it.Next().(models.RepositoryRecord)
 		rl.Items = append(rl.Items, *rr.Clone())
 	}
 

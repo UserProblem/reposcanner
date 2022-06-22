@@ -21,7 +21,12 @@ type Controller struct {
 type Job struct {
 	Id     string
 	Repo   *sw.RepositoryInfo
-	Result chan *[]sw.FindingsInfo
+	Result chan *JobUpdate
+}
+
+type JobUpdate struct {
+	Status   string
+	Findings *[]sw.FindingsInfo
 }
 
 type ScanHandler interface {
@@ -83,7 +88,7 @@ func (c *Controller) RunOnce() {
 	case job := <-c.Cancelling:
 		log.Printf("Handling cancellation of job. Id: %v\n", job.Id)
 		go c.scanHandler.StopScan(job)
-	case _ = <-c.Quit:
+	case <-c.Quit:
 		log.Println("Stopping controller.")
 		c.QuitFlag = true
 	}
@@ -105,7 +110,7 @@ func (c *Controller) AddJob(ri *sw.RepositoryInfo) *Job {
 	job := Job{
 		Id:     <-c.nextJobId,
 		Repo:   ri.Clone(),
-		Result: make(chan *[]sw.FindingsInfo),
+		Result: make(chan *JobUpdate),
 	}
 	go func() { c.Incoming <- &job }()
 	return &job

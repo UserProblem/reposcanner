@@ -31,7 +31,7 @@ func initializeDummyScanner() *DummyScanner {
 	}
 }
 
-func setup() (*engine.Controller, *DummyScanner) {
+func setupControllerTests() (*engine.Controller, *DummyScanner) {
 	var c engine.Controller
 
 	o := initializeDummyScanner()
@@ -41,7 +41,7 @@ func setup() (*engine.Controller, *DummyScanner) {
 }
 
 func TestAddJobAddsToIncomingChannel(t *testing.T) {
-	c, _ := setup()
+	c, _ := setupControllerTests()
 
 	ri := sw.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
@@ -62,7 +62,7 @@ func TestAddJobAddsToIncomingChannel(t *testing.T) {
 }
 
 func TestRunOnceHandlesJobFromIncomingChannel(t *testing.T) {
-	c, o := setup()
+	c, o := setupControllerTests()
 
 	ri := sw.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
@@ -82,7 +82,7 @@ func TestRunOnceHandlesJobFromIncomingChannel(t *testing.T) {
 }
 
 func TestRemoveJobAddsToCancellingChannel(t *testing.T) {
-	c, _ := setup()
+	c, _ := setupControllerTests()
 
 	ri := sw.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
@@ -105,7 +105,7 @@ func TestRemoveJobAddsToCancellingChannel(t *testing.T) {
 }
 
 func TestRunOnceHandlesJobFromCancellingChannel(t *testing.T) {
-	c, o := setup()
+	c, o := setupControllerTests()
 
 	ri := sw.DefaultRepositoryInfo()
 	job := c.AddJob(ri)
@@ -127,7 +127,7 @@ func TestRunOnceHandlesJobFromCancellingChannel(t *testing.T) {
 }
 
 func TestCallingStopStopsController(t *testing.T) {
-	c, _ := setup()
+	c, _ := setupControllerTests()
 
 	if c.QuitFlag != false {
 		t.Fatalf("Expected controller to be running.\n")

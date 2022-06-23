@@ -9,6 +9,7 @@ import (
 )
 
 type App struct {
+	DBType           string
 	Router           HttpRouter
 	RepoStore        RepoStore
 	ScanStore        ScanStore
@@ -37,17 +38,17 @@ func (a *App) Initialize() {
 func (a *App) ClearStores() {
 	var err error
 
-	var rs *RepoStore
-	if rs, err = NewRepoStore(); err != nil {
+	var rs RepoStore
+	if rs, err = NewRepoStore(a.DBType); err != nil {
 		log.Fatal("Cannot initialize repository data store.\n")
 	}
-	a.RepoStore = *rs
+	a.RepoStore = rs
 
-	var ss *ScanStore
-	if ss, err = NewScanStore(); err != nil {
+	var ss ScanStore
+	if ss, err = NewScanStore(a.DBType); err != nil {
 		log.Fatal("Cannot initialize scan data store.\n")
 	}
-	a.ScanStore = *ss
+	a.ScanStore = ss
 }
 
 func (a *App) Run() {

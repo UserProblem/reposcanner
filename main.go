@@ -13,6 +13,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	sw "github.com/UserProblem/reposcanner/go"
 )
@@ -21,6 +22,8 @@ func main() {
 	log.Printf("Server started")
 
 	var app sw.App
+	app.DBType = os.Getenv("DATABASE_TYPE")
+
 	app.Initialize()
 	app.Run()
 

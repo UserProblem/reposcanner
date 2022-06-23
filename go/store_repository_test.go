@@ -2,6 +2,7 @@ package swagger_test
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -10,8 +11,8 @@ import (
 	"github.com/UserProblem/reposcanner/models"
 )
 
-func initializeRepoStore(t *testing.T) *sw.RepoStore {
-	rs, err := sw.NewRepoStore()
+func initializeRepoStore(t *testing.T) sw.RepoStore {
+	rs, err := sw.NewRepoStore(os.Getenv("DATABASE_TYPE"))
 	if err != nil {
 		t.Fatalf("Failed to initialize repository store.")
 	}

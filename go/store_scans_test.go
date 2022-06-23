@@ -1,6 +1,7 @@
 package swagger_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -8,8 +9,8 @@ import (
 	"github.com/UserProblem/reposcanner/models"
 )
 
-func initializeScanStore(t *testing.T) *sw.ScanStore {
-	ss, err := sw.NewScanStore()
+func initializeScanStore(t *testing.T) sw.ScanStore {
+	ss, err := sw.NewScanStore(os.Getenv("DATABASE_TYPE"))
 	if err != nil {
 		t.Errorf("Failed to initialize scan store.")
 		t.FailNow()

@@ -1,19 +1,18 @@
 package swagger
 
 import (
-	"errors"
+	"encoding/base64"
+	"encoding/binary"
 
 	"github.com/UserProblem/reposcanner/models"
 )
 
 type ScanStore interface {
-	NextId() string
 	Insert(si *models.ScanInfo) (*models.ScanRecord, error)
 	Retrieve(id string) (*models.ScanRecord, error)
 	Delete(id string) error
 	Update(sr *models.ScanRecord) error
 	List(pp *models.PaginationParams) (*models.ScanList, error)
-	NextFindingsId() int
 	InsertFindings(scanId string, findings []*models.FindingsInfo) error
 	ListFindings(scanId string) ([]*models.FindingsInfo, error)
 	DeleteFindings(scanId string) (int, error)
@@ -23,35 +22,38 @@ type ScanStore interface {
 // Returns nil and an error on failure
 func NewScanStore(dbtype string) (ScanStore, error) {
 	if dbtype == "postgresql" {
-		return nil, errors.New("not implemented")
+		return NewScanStorePsqlDB()
 	} else {
 		return NewScanStoreMemDB()
 	}
 }
 
-/*
-CREATE TYPE enum_status (
-	"QUEUED",
-	"IN PROGRESS",
-	"SUCCESS",
-	"FAILURE"
-)
-CREATE TABLE IF NOT EXISTS scans
-(
-    id TEXT,
-	repoId INTEGER NOT NULL REFERENCES repositories(id),
-    queuedAt TIMESTAMPTZ NOT NULL,
-	scanningAt TIMESTAMPTZ,
-	finishedAt TIMESTAMPTZ,
-	status enum_status NOT NULL,
-    CONSTRAINT scans_pkey PRIMARY KEY (id)
-)
+// Helper function to convert a numeric value into a base64
+// string value that can be used as an id
+func EncodeScanId(v uint64) string {
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, v)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
 
-CREATE TABLE IF NOT EXISTS findings
-(
-	id SERIAL,
-	scanId TEXT NOT NULL REFERENCES scans(id)
-	finding JSONB NOT NULL
-	CONSTRAINT findings_pkey PRIMARY KEY (id)
-)
-*/
+// Helper function to validate that the given string is a
+// proper base64 string value
+func ValidScanId(s string) bool {
+	if len(s) != 11 {
+		return false
+	}
+	if _, err := base64.RawURLEncoding.DecodeString(s); err != nil {
+		return false
+	}
+	return true
+}
+
+// Helper function to continuously generate an incrementing
+// uint64 value on the given channel
+func generateObjIds(ch chan<- uint64) {
+	nextId := uint64(1)
+	for {
+		ch <- nextId
+		nextId++
+	}
+}

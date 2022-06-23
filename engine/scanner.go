@@ -131,7 +131,7 @@ func (s *Scanner) Work(id string) {
 			Location: &models.FindingsLocation{
 				Path: "hello.go",
 				Positions: &models.FileLocation{
-					Begin: struct{ line int32 }{line: 21},
+					Begin: &models.LineLocation{Line: 21},
 				},
 			},
 			Metadata: &models.FindingsMetadata{
@@ -145,8 +145,8 @@ func (s *Scanner) Work(id string) {
 			Location: &models.FindingsLocation{
 				Path: "world.go",
 				Positions: &models.FileLocation{
-					Begin: struct{ line int32 }{line: 41},
-					End:   struct{ line int32 }{line: 43},
+					Begin: &models.LineLocation{Line: 41},
+					End:   &models.LineLocation{Line: 43},
 				},
 			},
 			Metadata: &models.FindingsMetadata{

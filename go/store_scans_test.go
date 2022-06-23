@@ -1,46 +1,108 @@
 package swagger_test
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	sw "github.com/UserProblem/reposcanner/go"
 	"github.com/UserProblem/reposcanner/models"
 )
 
-func initializeScanStore(t *testing.T) sw.ScanStore {
-	ss, err := sw.NewScanStore(os.Getenv("DATABASE_TYPE"))
-	if err != nil {
-		t.Errorf("Failed to initialize scan store.")
-		t.FailNow()
+func DropScanTable(t *testing.T) {
+	PDB := sw.GetPsqlDBInstance()
+	if _, err := PDB.DB.Exec("DROP TABLE IF EXISTS scans CASCADE"); err != nil {
+		t.Fatalf("Failed to drop scans table: %v\n", err.Error())
 	}
+	if _, err := PDB.DB.Exec("DROP TABLE IF EXISTS findings CASCADE"); err != nil {
+		t.Fatalf("Failed to drop findings table: %v\n", err.Error())
+	}
+}
+
+func initializeScanStore(t *testing.T) sw.ScanStore {
+	dbtype := os.Getenv("DATABASE_TYPE")
+	if dbtype == "postgresql" {
+		DropScanTable(t)
+		DropRepoTable(t)
+	}
+
+	if _, err := sw.NewRepoStore(dbtype); err != nil {
+		t.Fatalf("Failed to initialize repo store: %v\n", err.Error())
+	}
+
+	ss, err := sw.NewScanStore(dbtype)
+	if err != nil {
+		t.Fatalf("Failed to initialize scan store: %v\n", err.Error())
+	}
+
 	return ss
 }
 
-func TestNextScanIdIncrements(t *testing.T) {
-	ss := initializeScanStore(t)
+func addDummyRepo(t *testing.T) {
+	dbtype := os.Getenv("DATABASE_TYPE")
+	rs, err := sw.NewRepoStore(dbtype)
 
-	first := ss.NextId()
-	second := ss.NextId()
-
-	if first != sw.EncodeScanId(1) {
-		t.Errorf("Expected first id is %v. Got %v\n", sw.EncodeScanId(1), first)
+	if err != nil {
+		t.Fatalf("Failed to initialize repo store: %v\n", err.Error())
 	}
 
-	if second != sw.EncodeScanId(2) {
-		t.Errorf("Expected second id is %v. Got %v\n", sw.EncodeScanId(2), second)
+	_, err = rs.Insert(&models.RepositoryInfo{
+		Name:   "test repo",
+		Url:    "http://example.com/test/repo",
+		Branch: "main",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to insert repo to the repo store: %v\n", err.Error())
 	}
+}
+
+func addDummyScan(t *testing.T, ss sw.ScanStore) string {
+	sr, err := ss.Insert(&models.ScanInfo{
+		RepoId:     int64(1),
+		QueuedAt:   "1970-01-01T00:00:01Z",
+		ScanningAt: "",
+		FinishedAt: "",
+		Status:     "QUEUED",
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to insert scan to the scan store: %v\n", err.Error())
+	}
+
+	return sr.Id
+}
+
+func checkTimestampsEquivalent(first, second string) bool {
+	var t1, t2 time.Time
+	var err error
+
+	if first == "" && second == "" {
+		return true
+	}
+
+	if t1, err = time.Parse("2006-01-02T15:04:05Z07:00", first); err != nil {
+		return false
+	}
+
+	if t2, err = time.Parse("2006-01-02T15:04:05Z07:00", second); err != nil {
+		return false
+	}
+
+	return t1.Equal(t2)
 }
 
 func TestStoreNewScanInfo(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
 
 	si := models.DefaultScanInfo()
 	sr, err := ss.Insert(si)
 
 	if err != nil {
-		t.Fatalf("Failed to insert scan info into the database.\n")
+		t.Fatalf("Failed to insert scan info into the database: %v\n", err.Error())
 	}
 
 	if sr.Id != sw.EncodeScanId(1) {
@@ -51,15 +113,15 @@ func TestStoreNewScanInfo(t *testing.T) {
 		t.Errorf("Expected repo id is %v. Got %v\n", si.RepoId, sr.Info.RepoId)
 	}
 
-	if sr.Info.QueuedAt != si.QueuedAt {
+	if !checkTimestampsEquivalent(sr.Info.QueuedAt, si.QueuedAt) {
 		t.Errorf("Expected queued at is '%v'. Got '%v'\n", si.QueuedAt, sr.Info.QueuedAt)
 	}
 
-	if sr.Info.ScanningAt != si.ScanningAt {
+	if !checkTimestampsEquivalent(sr.Info.ScanningAt, si.ScanningAt) {
 		t.Errorf("Expected scanning at is '%v'. Got '%v'\n", si.ScanningAt, sr.Info.ScanningAt)
 	}
 
-	if sr.Info.FinishedAt != si.FinishedAt {
+	if !checkTimestampsEquivalent(sr.Info.FinishedAt, si.FinishedAt) {
 		t.Errorf("Expected finished at is '%v'. Got '%v'\n", si.FinishedAt, sr.Info.FinishedAt)
 	}
 
@@ -70,19 +132,20 @@ func TestStoreNewScanInfo(t *testing.T) {
 
 func TestRetrieveScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
 
 	si := models.DefaultScanInfo()
 	_, err := ss.Insert(si)
 
 	if err != nil {
-		t.Errorf("Failed to insert scan info into the database.\n")
+		t.Errorf("Failed to insert scan info into the database: %v\n", err.Error())
 		t.FailNow()
 	}
 
 	var sr *models.ScanRecord
 	sr, err = ss.Retrieve(sw.EncodeScanId(1))
 	if err != nil {
-		t.Errorf("Failed to retrieve scan record from the database.\n")
+		t.Errorf("Failed to retrieve scan record from the database: %v\n", err.Error())
 		t.FailNow()
 	}
 
@@ -94,15 +157,15 @@ func TestRetrieveScanRecord(t *testing.T) {
 		t.Errorf("Expected repo id is %v. Got %v\n", si.RepoId, sr.Info.RepoId)
 	}
 
-	if sr.Info.QueuedAt != si.QueuedAt {
+	if !checkTimestampsEquivalent(sr.Info.QueuedAt, si.QueuedAt) {
 		t.Errorf("Expected queued at is '%v'. Got '%v'\n", si.QueuedAt, sr.Info.QueuedAt)
 	}
 
-	if sr.Info.ScanningAt != si.ScanningAt {
+	if !checkTimestampsEquivalent(sr.Info.ScanningAt, si.ScanningAt) {
 		t.Errorf("Expected scanning at is '%v'. Got '%v'\n", si.ScanningAt, sr.Info.ScanningAt)
 	}
 
-	if sr.Info.FinishedAt != si.FinishedAt {
+	if !checkTimestampsEquivalent(sr.Info.FinishedAt, si.FinishedAt) {
 		t.Errorf("Expected finished at is '%v'. Got '%v'\n", si.FinishedAt, sr.Info.FinishedAt)
 	}
 
@@ -121,6 +184,7 @@ func TestRetrieveInvalidScanRecord(t *testing.T) {
 
 func TestDeleteScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
 
 	si := models.DefaultScanInfo()
 	_, err := ss.Insert(si)
@@ -154,6 +218,7 @@ func TestDeleteInvalidScanRecord(t *testing.T) {
 
 func TestUpdateScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
 
 	si := models.DefaultScanInfo()
 
@@ -167,7 +232,7 @@ func TestUpdateScanRecord(t *testing.T) {
 		Info: &models.ScanInfo{
 			RepoId:     ssOrig.Info.RepoId,
 			QueuedAt:   ssOrig.Info.QueuedAt,
-			ScanningAt: "1970-01-01 00:00:01+0",
+			ScanningAt: "1970-01-01T00:00:01Z",
 			FinishedAt: "",
 			Status:     "IN PROGRESS",
 		},
@@ -182,12 +247,12 @@ func TestUpdateScanRecord(t *testing.T) {
 		t.Fatalf("Failed to retrieve scan record from the database.\n")
 	}
 
-	if ssMod.Info.QueuedAt != ssOrig.Info.QueuedAt {
-		t.Errorf("Expected queued at to be '%v'. Got '%v'\n", ssOrig.Info.QueuedAt, ssMod.Info.QueuedAt)
+	if !checkTimestampsEquivalent(ssMod.Info.QueuedAt, ssOrig.Info.QueuedAt) {
+		t.Errorf("Expected queued at is '%v'. Got '%v'\n", ssOrig.Info.QueuedAt, ssMod.Info.QueuedAt)
 	}
 
-	if ssMod.Info.ScanningAt != "1970-01-01 00:00:01+0" {
-		t.Errorf("Expected scanning at to be '1970-01-01 00:00:01+0'. Got '%v'\n", ssMod.Info.ScanningAt)
+	if !checkTimestampsEquivalent(ssMod.Info.ScanningAt, "1970-01-01T00:00:01Z") {
+		t.Errorf("Expected scanning at to be '1970-01-01T00:00:01Z'. Got '%v'\n", ssMod.Info.ScanningAt)
 	}
 
 	if ssMod.Info.Status != "IN PROGRESS" {
@@ -197,6 +262,7 @@ func TestUpdateScanRecord(t *testing.T) {
 
 func TestUpdateInvalidScanRecord(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
 
 	sr := models.ScanRecord{
 		Id:   sw.EncodeScanId(1),
@@ -216,6 +282,7 @@ func TestRetrieveScanList(t *testing.T) {
 
 	var totalRecords, i int32 = 10, 1
 	for ; i <= totalRecords; i++ {
+		addDummyRepo(t)
 		si = models.DefaultScanInfo()
 		si.RepoId = int64(i)
 
@@ -249,7 +316,7 @@ func TestRetrieveScanList(t *testing.T) {
 	for k := range sl.Items {
 		sr := sl.Items[k]
 		if sr.Info.RepoId != j {
-			t.Errorf("Expected repo id to be %v. Got %v\n", j, sr.Id)
+			t.Errorf("Expected repo id to be %v. Got %v\n", j, sr.Info.RepoId)
 		}
 		j++
 	}
@@ -312,7 +379,7 @@ func makeFindingsList(n int) []*models.FindingsInfo {
 			Location: &models.FindingsLocation{
 				Path: "hello.go",
 				Positions: &models.FileLocation{
-					Begin: struct{ line int32 }{line: int32(i + 1)},
+					Begin: &models.LineLocation{Line: int32(i)},
 				},
 			},
 			Metadata: &models.FindingsMetadata{
@@ -327,10 +394,12 @@ func makeFindingsList(n int) []*models.FindingsInfo {
 
 func TestAddFindingsList(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
+	scanId := addDummyScan(t, ss)
 
 	findings := makeFindingsList(10)
 
-	if err := ss.InsertFindings("id", findings); err != nil {
+	if err := ss.InsertFindings(scanId, findings); err != nil {
 		t.Errorf("Failed to insert findings list: %v\n", err.Error())
 	}
 }
@@ -349,13 +418,15 @@ func TestDeleteFindingsNonExistentScanId(t *testing.T) {
 
 func TestDeleteFindings(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
+	scanId := addDummyScan(t, ss)
 
 	findings := makeFindingsList(10)
-	if err := ss.InsertFindings("1234", findings); err != nil {
+	if err := ss.InsertFindings(scanId, findings); err != nil {
 		t.Errorf("Failed to insert findings list: %v\n", err.Error())
 	}
 
-	if n, err := ss.DeleteFindings("1234"); err != nil {
+	if n, err := ss.DeleteFindings(scanId); err != nil {
 		t.Fatalf("Expected no error. Got %v\n", err.Error())
 	} else {
 		if n != 10 {
@@ -378,18 +449,24 @@ func TestListFindingsNonExistentScanId(t *testing.T) {
 
 func TestListFindings(t *testing.T) {
 	ss := initializeScanStore(t)
+	addDummyRepo(t)
+	scanId := addDummyScan(t, ss)
 
 	findings := makeFindingsList(10)
-	if err := ss.InsertFindings("1234", findings); err != nil {
+	if err := ss.InsertFindings(scanId, findings); err != nil {
 		t.Errorf("Failed to insert findings list: %v\n", err.Error())
 	}
 
-	if results, err := ss.ListFindings("1234"); err != nil {
+	if results, err := ss.ListFindings(scanId); err != nil {
 		t.Fatalf("Expected no error. Got %v\n", err.Error())
 	} else {
 		for i := range findings {
-			expected := findings[i].Location.Positions.Begin
-			actual := results[i].Location.Positions.Begin
+			dump, _ := json.Marshal(results[i])
+			t.Logf("#%v: %v\n", i, string(dump))
+
+			expected := findings[i].Location.Positions.Begin.Line
+			actual := results[i].Location.Positions.Begin.Line
+
 			if expected != actual {
 				t.Errorf("Expected %v. Got %v\n", expected, actual)
 			}

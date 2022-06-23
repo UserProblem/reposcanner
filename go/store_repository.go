@@ -1,13 +1,10 @@
 package swagger
 
 import (
-	"errors"
-
 	"github.com/UserProblem/reposcanner/models"
 )
 
 type RepoStore interface {
-	NextId() int64
 	Insert(ri *models.RepositoryInfo) (*models.RepositoryRecord, error)
 	Retrieve(id int64) (*models.RepositoryRecord, error)
 	Delete(id int64) error
@@ -19,19 +16,8 @@ type RepoStore interface {
 // Returns nil and an error on failure
 func NewRepoStore(dbtype string) (RepoStore, error) {
 	if dbtype == "postgresql" {
-		return nil, errors.New("not implemented")
+		return NewRepoStorePsqlDB()
 	} else {
 		return NewRepoStoreMemDB()
 	}
 }
-
-/*
-CREATE TABLE IF NOT EXISTS repositories
-(
-    id SERIAL,
-    name TEXT NOT NULL,
-	url TEXT NOT NULL,
-	branch TEXT NOT NULL
-    CONSTRAINT repositories_pkey PRIMARY KEY (id)
-)
-*/

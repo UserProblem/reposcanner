@@ -11,27 +11,24 @@ import (
 	"github.com/UserProblem/reposcanner/models"
 )
 
-func initializeRepoStore(t *testing.T) sw.RepoStore {
-	rs, err := sw.NewRepoStore(os.Getenv("DATABASE_TYPE"))
-	if err != nil {
-		t.Fatalf("Failed to initialize repository store.")
+func DropRepoTable(t *testing.T) {
+	PDB := sw.GetPsqlDBInstance()
+	if _, err := PDB.DB.Exec("DROP TABLE IF EXISTS repositories CASCADE"); err != nil {
+		t.Fatalf("Failed to drop repositories table: %v\n", err.Error())
 	}
-	return rs
 }
 
-func TestNextIdIncrements(t *testing.T) {
-	rs := initializeRepoStore(t)
-
-	first := rs.NextId()
-	second := rs.NextId()
-
-	if first != 1 {
-		t.Errorf("Expected first id is 1. Got %v\n", first)
+func initializeRepoStore(t *testing.T) sw.RepoStore {
+	dbtype := os.Getenv("DATABASE_TYPE")
+	if dbtype == "postgresql" {
+		DropRepoTable(t)
 	}
 
-	if second != first+1 {
-		t.Errorf("Expected second id is one more than first id. Got second=%v, first=%v\n", second, first)
+	rs, err := sw.NewRepoStore(dbtype)
+	if err != nil {
+		t.Fatalf("Failed to initialize repository store: %v", err.Error())
 	}
+	return rs
 }
 
 func TestStoreNewRepositoryInfo(t *testing.T) {

@@ -1,8 +1,6 @@
 package swagger
 
 import (
-	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -54,8 +52,8 @@ func NewScanStoreMemDB() (ScanStore, error) {
 	}
 
 	chS, chF := make(chan uint64), make(chan uint64)
-	go generateJobIds(chS)
-	go generateJobIds(chF)
+	go generateObjIds(chS)
+	go generateObjIds(chF)
 
 	return &ScanStoreMemDB{
 		DB:             db,
@@ -65,38 +63,10 @@ func NewScanStoreMemDB() (ScanStore, error) {
 	}, nil
 }
 
-func generateJobIds(ch chan<- uint64) {
-	nextId := uint64(1)
-	for {
-		ch <- nextId
-		nextId++
-	}
-}
-
 // Helper function to auto-generate the next unique id value
 // that can be used for new scan records.
 func (ss *ScanStoreMemDB) NextId() string {
 	return EncodeScanId(<-ss.nextId)
-}
-
-// Helper function to convert a numeric value into a base64
-// string value that can be used as an id
-func EncodeScanId(v uint64) string {
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, v)
-	return base64.RawURLEncoding.EncodeToString(b)
-}
-
-// Helper function to validate that the given string is a
-// proper base64 string value
-func ValidScanId(s string) bool {
-	if len(s) != 11 {
-		return false
-	}
-	if _, err := base64.RawURLEncoding.DecodeString(s); err != nil {
-		return false
-	}
-	return true
 }
 
 // Add a new scan record to the data store. Returns a pointer

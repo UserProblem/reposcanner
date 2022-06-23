@@ -19,5 +19,5 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func currentTimestamptz() string {
-	return time.Now().Format("2006-01-02 15:04:05-07")
+	return time.Now().Format("2006-01-02T15:04:05Z07:00")
 }

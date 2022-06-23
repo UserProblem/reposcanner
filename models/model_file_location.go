@@ -13,8 +13,12 @@ package models
 type FileLocation struct {
 
 	// the start of the block of code that produced this finding
-	Begin interface{} `json:"begin"`
+	Begin *LineLocation `json:"begin"`
 
 	// if present, the end of the block of code that produced this finding
-	End interface{} `json:"end,omitempty"`
+	End *LineLocation `json:"end,omitempty"`
+}
+
+type LineLocation struct {
+	Line int32 `json:"line"`
 }

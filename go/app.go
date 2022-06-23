@@ -9,8 +9,9 @@ import (
 )
 
 type App struct {
-	DBType           string
 	Router           HttpRouter
+	DBType           string
+	DB               *PsqlDB
 	RepoStore        RepoStore
 	ScanStore        ScanStore
 	EngineController engine.Controller

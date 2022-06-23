@@ -288,3 +288,110 @@ func TestRetrieveScanListInvalidPageSize(t *testing.T) {
 		t.Errorf("Expected error 'invalid page size'. Got '%v'\n", err.Error())
 	}
 }
+
+func TestAddEmptyFindingsList(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	if err := ss.InsertFindings("id", nil); err != nil {
+		t.Fatalf("Expected insert nil findings is successful. Got error %v\n", err.Error())
+	}
+
+	if err := ss.InsertFindings("id", make([]*models.FindingsInfo, 0)); err != nil {
+		t.Fatalf("Expected insert empty findings is successful. Got error %v\n", err.Error())
+	}
+}
+
+func makeFindingsList(n int) []*models.FindingsInfo {
+	findings := make([]*models.FindingsInfo, n)
+
+	for i := 0; i < n; i++ {
+		findings[i] = &models.FindingsInfo{
+			Type_:  "sast",
+			RuleId: "G001",
+			Location: &models.FindingsLocation{
+				Path: "hello.go",
+				Positions: &models.FileLocation{
+					Begin: struct{ line int32 }{line: int32(i + 1)},
+				},
+			},
+			Metadata: &models.FindingsMetadata{
+				Description: "Hard-coded secret - public key",
+				Severity:    "HIGH",
+			},
+		}
+	}
+
+	return findings
+}
+
+func TestAddFindingsList(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	findings := makeFindingsList(10)
+
+	if err := ss.InsertFindings("id", findings); err != nil {
+		t.Errorf("Failed to insert findings list: %v\n", err.Error())
+	}
+}
+
+func TestDeleteFindingsNonExistentScanId(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	if n, err := ss.DeleteFindings("42"); err != nil {
+		t.Fatalf("Expected no error. Got %v\n", err)
+	} else {
+		if n != 0 {
+			t.Errorf("Expected 0 deleted count. Got %v\n", n)
+		}
+	}
+}
+
+func TestDeleteFindings(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	findings := makeFindingsList(10)
+	if err := ss.InsertFindings("1234", findings); err != nil {
+		t.Errorf("Failed to insert findings list: %v\n", err.Error())
+	}
+
+	if n, err := ss.DeleteFindings("1234"); err != nil {
+		t.Fatalf("Expected no error. Got %v\n", err.Error())
+	} else {
+		if n != 10 {
+			t.Errorf("Expected 10 items deleted. Got %v\n", n)
+		}
+	}
+}
+
+func TestListFindingsNonExistentScanId(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	if findings, err := ss.ListFindings("42"); err != nil {
+		t.Fatalf("Expected no error. Got %v\n", err.Error())
+	} else {
+		if len(findings) != 0 {
+			t.Errorf("Expected empty results. Got %v\n", len(findings))
+		}
+	}
+}
+
+func TestListFindings(t *testing.T) {
+	ss := initializeScanStore(t)
+
+	findings := makeFindingsList(10)
+	if err := ss.InsertFindings("1234", findings); err != nil {
+		t.Errorf("Failed to insert findings list: %v\n", err.Error())
+	}
+
+	if results, err := ss.ListFindings("1234"); err != nil {
+		t.Fatalf("Expected no error. Got %v\n", err.Error())
+	} else {
+		for i := range findings {
+			expected := findings[i].Location.Positions.Begin
+			actual := results[i].Location.Positions.Begin
+			if expected != actual {
+				t.Errorf("Expected %v. Got %v\n", expected, actual)
+			}
+		}
+	}
+}

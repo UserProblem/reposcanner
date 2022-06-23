@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	sw "github.com/UserProblem/reposcanner/go"
 	"github.com/UserProblem/reposcanner/models"
@@ -303,4 +305,73 @@ func TestGetScanListInvalidPageSize(t *testing.T) {
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)
+}
+
+func TestAddScanAndReceiveFindings(t *testing.T) {
+	app.ClearStores()
+	addDummyRepoRecords(t, 1)
+
+	req, _ := http.NewRequest("POST", api_version+"/repository/1/startScan", nil)
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusCreated, response.Code)
+
+	var addBody models.ApiResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &addBody); err != nil {
+		t.Fatalf("Invalid JSON received as response body.")
+	}
+
+	// Trigger the scan to start
+	app.EngineController.RunOnce()
+
+	waitSeconds(1)
+
+	scanId := addBody.Message
+
+	req, _ = http.NewRequest("GET", api_version+"/scan/"+scanId, nil)
+	response = executeRequest(req)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	checkScanStatus(t, response, true, false, "IN PROGRESS")
+
+	waitSeconds(3)
+
+	req, _ = http.NewRequest("GET", api_version+"/scan/"+scanId, nil)
+	response = executeRequest(req)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	checkScanStatus(t, response, true, true, "SUCCESS")
+
+	var sr models.ScanResults
+	_ = json.Unmarshal(response.Body.Bytes(), &sr)
+
+	if len(sr.Findings) == 0 {
+		t.Errorf("Expected findings to not be empty.\n")
+	}
+}
+
+func waitSeconds(n int) {
+	timer := time.NewTimer(time.Duration(n) * time.Second)
+	<-timer.C
+}
+
+func checkScanStatus(t *testing.T, rsp *httptest.ResponseRecorder, scanningAt, finishedAt bool, status string) {
+	var sr models.ScanResults
+	if err := json.Unmarshal(rsp.Body.Bytes(), &sr); err != nil {
+		t.Fatalf("Invalid JSON received as response body.")
+	}
+
+	if scanningAt && sr.Info.ScanningAt == "" {
+		t.Fatalf("Expected scanning at to be set but it is still empty.\n")
+	}
+
+	if finishedAt && sr.Info.FinishedAt == "" {
+		t.Fatalf("Expected finished at to be set but it is still empty.\n")
+	}
+
+	if sr.Info.Status != status {
+		t.Fatalf("Expected status to be %v. Got %v\n", status, sr.Info.Status)
+	}
 }

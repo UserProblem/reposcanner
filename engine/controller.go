@@ -26,7 +26,7 @@ type Job struct {
 
 type JobUpdate struct {
 	Status   string
-	Findings *[]models.FindingsInfo
+	Findings []*models.FindingsInfo
 }
 
 type ScanHandler interface {

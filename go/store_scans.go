@@ -11,9 +11,10 @@ import (
 )
 
 type ScanStore struct {
-	DB     *memdb.MemDB
-	nextId uint64
-	total  int32
+	DB             *memdb.MemDB
+	nextId         chan uint64
+	total          int32
+	nextFindingsId chan uint64
 }
 
 /*
@@ -25,13 +26,21 @@ CREATE TYPE enum_status (
 )
 CREATE TABLE IF NOT EXISTS scans
 (
-    id SERIAL,
+    id TEXT,
 	repoId INTEGER NOT NULL REFERENCES repositories(id),
     queuedAt TIMESTAMPTZ NOT NULL,
 	scanningAt TIMESTAMPTZ,
 	finishedAt TIMESTAMPTZ,
 	status enum_status NOT NULL,
     CONSTRAINT scans_pkey PRIMARY KEY (id)
+)
+
+CREATE TABLE IF NOT EXISTS findings
+(
+	id SERIAL,
+	scanId TEXT NOT NULL REFERENCES scans(id)
+	finding JSONB NOT NULL
+	CONSTRAINT findings_pkey PRIMARY KEY (id)
 )
 */
 
@@ -50,6 +59,21 @@ func NewScanStore() (*ScanStore, error) {
 					},
 				},
 			},
+			"findings": {
+				Name: "findings",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.IntFieldIndex{Field: "Id"},
+					},
+					"scanid": {
+						Name:    "scanid",
+						Unique:  false,
+						Indexer: &memdb.StringFieldIndex{Field: "ScanId", Lowercase: false},
+					},
+				},
+			},
 		},
 	}
 
@@ -58,14 +82,30 @@ func NewScanStore() (*ScanStore, error) {
 		return nil, fmt.Errorf("cannot initialize db: %s", err.Error())
 	}
 
-	return &ScanStore{DB: db, nextId: 1, total: 0}, nil
+	chS, chF := make(chan uint64), make(chan uint64)
+	go generateJobIds(chS)
+	go generateJobIds(chF)
+
+	return &ScanStore{
+		DB:             db,
+		nextId:         chS,
+		total:          0,
+		nextFindingsId: chF,
+	}, nil
+}
+
+func generateJobIds(ch chan<- uint64) {
+	nextId := uint64(1)
+	for {
+		ch <- nextId
+		nextId++
+	}
 }
 
 // Helper function to auto-generate the next unique id value
 // that can be used for new scan records.
-func (rs *ScanStore) NextId() string {
-	defer func() { rs.nextId++ }()
-	return EncodeScanId(rs.nextId)
+func (ss *ScanStore) NextId() string {
+	return EncodeScanId(<-ss.nextId)
 }
 
 // Helper function to convert a numeric value into a base64
@@ -211,4 +251,78 @@ func (ss *ScanStore) List(pp *models.PaginationParams) (*models.ScanList, error)
 	}
 
 	return &sl, nil
+}
+
+// Helper function to auto-generate the next unique id value
+// that can be used for new findings records.
+func (ss *ScanStore) NextFindingsId() int {
+	return int(<-ss.nextFindingsId)
+}
+
+// InsertFindings stores all of the contents of the findings
+// list into the data store, indexed by scanId. All operations
+// related to findings are done in bulk. It returns nil on success
+// or an error on failure, at which point none of the findings
+// will be stored.
+func (ss *ScanStore) InsertFindings(scanId string, findings []*models.FindingsInfo) error {
+	if len(findings) == 0 {
+		return nil
+	}
+
+	txn := ss.DB.Txn(true)
+
+	for _, fi := range findings {
+		fr := models.FindingsRecord{
+			Id:      ss.NextFindingsId(),
+			ScanId:  scanId,
+			Finding: fi,
+		}
+
+		if err := txn.Insert("findings", fr); err != nil {
+			txn.Abort()
+			return fmt.Errorf("error inserting data to the DB: %v", fr)
+		}
+	}
+
+	txn.Commit()
+	return nil
+}
+
+// ListFindings retrieves all of the findings from the data store
+// indexed by scanId. All operations related to findings are done
+// in bulk. It returns a list of findings on success, or nil and
+// an error on failure.
+func (ss *ScanStore) ListFindings(scanId string) ([]*models.FindingsInfo, error) {
+	txn := ss.DB.Txn(false)
+
+	it, err := txn.Get("findings", "scanid", scanId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot retrieve findings list: %v", err.Error())
+	}
+
+	findings := make([]*models.FindingsInfo, 0)
+	for fr := it.Next(); fr != nil; fr = it.Next() {
+		fi := fr.(models.FindingsRecord).Finding
+		findings = append(findings, fi)
+	}
+
+	return findings, nil
+}
+
+// DeleteFindings deletes all of the findings from the data store
+// indexed by scanId. All operations related to findings are done
+// in bulk. It returns the number of deleted records on success,
+// or zero and an error on failure, at which point none of the findings
+// will be deleted.
+func (ss *ScanStore) DeleteFindings(scanId string) (int, error) {
+	txn := ss.DB.Txn(true)
+
+	count, err := txn.DeleteAll("findings", "scanid", scanId)
+	if err != nil {
+		txn.Abort()
+		return 0, fmt.Errorf("cannot delete all findings: %v", err.Error())
+	}
+
+	txn.Commit()
+	return count, nil
 }

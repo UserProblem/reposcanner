@@ -22,6 +22,10 @@ func main() {
 
 	var app sw.App
 	app.Initialize()
+	app.Run()
 
-	log.Fatal(http.ListenAndServe(":8080", app.Router))
+	err := http.ListenAndServe(":8080", app.Router)
+
+	app.CleanUp()
+	log.Fatal(err.Error())
 }

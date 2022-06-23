@@ -31,7 +31,8 @@ func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := a.RepoStore.Retrieve(int64(id)); err != nil {
+	var rr *models.RepositoryRecord
+	if rr, err = a.RepoStore.Retrieve(int64(id)); err != nil {
 		respondWithError(w, http.StatusNotFound, "repository id not found")
 		return
 	}
@@ -55,6 +56,8 @@ func (a *App) AddScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, body)
+
+	a.AddScanRequest(rr.Info, sr)
 }
 
 func (a *App) DeleteScan(w http.ResponseWriter, r *http.Request) {
@@ -64,8 +67,6 @@ func (a *App) DeleteScan(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "invalid scan id")
 		return
 	}
-
-	// TODO TODO TODO TODO cancel ongoing scan
 
 	if err := a.ScanStore.Delete(id); err != nil {
 		if !strings.HasPrefix(err.Error(), "id not found") {
@@ -78,6 +79,9 @@ func (a *App) DeleteScan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+
+	a.RemoveScanRequest(id)
+	a.ScanStore.DeleteFindings(id)
 }
 
 func (a *App) GetScan(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +104,13 @@ func (a *App) GetScan(w http.ResponseWriter, r *http.Request) {
 		Findings: make([]models.FindingsInfo, 0),
 	}
 
-	// TODO TODO TODO add findings
+	if findings, err := a.ScanStore.ListFindings(id); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "cannot retrieve findings")
+	} else {
+		for _, fi := range findings {
+			sres.Findings = append(sres.Findings, *fi)
+		}
+	}
 
 	respondWithJSON(w, http.StatusOK, sres)
 }

@@ -13,6 +13,7 @@ type Scanner struct {
 	tokens       chan struct{}
 	jobBoard     map[string]*Job
 	jobBoardLock sync.RWMutex
+	jobBoardOpen bool
 }
 
 func (s *Scanner) Initialize(limit int) {
@@ -22,9 +23,26 @@ func (s *Scanner) Initialize(limit int) {
 	// Concurrent job board access
 	s.jobBoard = make(map[string]*Job)
 	s.jobBoardLock = sync.RWMutex{}
+	s.jobBoardOpen = true
+}
+
+func (s *Scanner) CleanUp() {
+	// Close and clear the job board
+	s.jobBoardOpen = false
+
+	s.jobBoardLock.Lock()
+	defer s.jobBoardLock.Unlock()
+
+	for k := range s.jobBoard {
+		delete(s.jobBoard, k)
+	}
 }
 
 func (s *Scanner) addToJobBoard(j *Job) error {
+	if !s.jobBoardOpen {
+		return errors.New("job board is closed")
+	}
+
 	s.jobBoardLock.Lock()
 	defer s.jobBoardLock.Unlock()
 
@@ -106,7 +124,7 @@ func (s *Scanner) Work(id string) {
 	}
 
 	// Send results
-	findings := []models.FindingsInfo{
+	findings := []*models.FindingsInfo{
 		{
 			Type_:  "sast",
 			RuleId: "G001",
@@ -140,7 +158,7 @@ func (s *Scanner) Work(id string) {
 
 	j.Result <- &JobUpdate{
 		Status:   "SUCCESS",
-		Findings: &findings,
+		Findings: findings,
 	}
 
 	s.removeFromJobBoard(id)

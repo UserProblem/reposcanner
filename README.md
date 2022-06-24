@@ -153,7 +153,7 @@ For functional testing a [Postman](https://www.postman.com/) collection is avail
 
 The service is designed as shown below.
 
-![class diagram](doc/class_diagram.png)
+![class diagram](docs/class_diagram.png)
 
 * The REST APIs for all endpoints are implemented in `App`.
 * `gorilla/mux` is used as the router backend, since it's stable and well-utilised in a lot of projects.

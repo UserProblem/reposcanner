@@ -6,6 +6,7 @@ COPY go ./go
 COPY models ./models
 COPY main.go .
 COPY go.mod .
+COPY .env .
 
 ENV CGO_ENABLED=0
 RUN go get -d -v ./...

@@ -14,5 +14,7 @@ RUN go build -a -installsuffix cgo -o swagger .
 
 FROM scratch AS runtime
 COPY --from=build /go/src/github.com/UserProblem/reposcanner/swagger ./
+COPY .env ./
+
 EXPOSE 8080/tcp
 ENTRYPOINT ["./swagger"]

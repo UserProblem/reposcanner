@@ -17,11 +17,12 @@ import (
 	"strconv"
 
 	sw "github.com/UserProblem/reposcanner/go"
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	log.Printf("Server started")
+	godotenv.Load()
 
 	var app sw.App
 
@@ -38,8 +39,10 @@ func main() {
 
 func loadDBParameters(app *sw.App) {
 	app.DBType = os.Getenv("DATABASE_TYPE")
-	app.DB = sw.GetPsqlDBInstance()
+	log.Printf("Using database type '%v'", app.DBType)
+
 	if app.DBType == "postgresql" {
+		app.DB = sw.GetPsqlDBInstance()
 		app.DB.Host = os.Getenv("DATABASE_HOST")
 		if pnum, err := strconv.Atoi(os.Getenv("DATABASE_PORT")); err != nil {
 			log.Fatal(err.Error())

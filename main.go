@@ -28,7 +28,7 @@ func main() {
 
 	loadDBParameters(&app)
 
-	app.Initialize()
+	app.Initialize(loadNoop())
 	app.Run()
 
 	err := http.ListenAndServe(":8080", app.Router)
@@ -54,4 +54,12 @@ func loadDBParameters(app *sw.App) {
 		app.DB.DBname = os.Getenv("DATABASE_NAME")
 		app.DB.Initialize()
 	}
+}
+
+func loadNoop() bool {
+	if noop := os.Getenv("ENGINE_NOOP"); noop == "1" {
+		log.Printf("Running with no-op scanner.")
+		return true
+	}
+	return false
 }

@@ -27,10 +27,10 @@ type ScanJob struct {
 
 const scannerLimit int = 5
 
-func (a *App) Initialize() {
+func (a *App) Initialize(noop bool) {
 	a.Router = a.NewRouter()
 	a.ClearStores()
-	a.EngineScanner.Initialize(scannerLimit)
+	a.EngineScanner.Initialize(scannerLimit, noop)
 	a.EngineController.Initialize(&a.EngineScanner)
 	a.ActiveJobs = make(map[string]*ScanJob)
 	a.ActiveJobsLock = sync.RWMutex{}

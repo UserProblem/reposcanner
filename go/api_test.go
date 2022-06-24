@@ -19,7 +19,7 @@ var app sw.App
 func TestMain(m *testing.M) {
 	godotenv.Load(".env_test")
 	prepareDb()
-	app.Initialize()
+	app.Initialize(true)
 	os.Exit(m.Run())
 }
 

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"sync"
 	"time"
@@ -14,9 +15,10 @@ type Scanner struct {
 	jobBoard     map[string]*Job
 	jobBoardLock sync.RWMutex
 	jobBoardOpen bool
+	noop         bool
 }
 
-func (s *Scanner) Initialize(limit int) {
+func (s *Scanner) Initialize(limit int, noop bool) {
 	// Number of concurrent running jobs
 	s.tokens = make(chan struct{}, limit)
 
@@ -24,6 +26,7 @@ func (s *Scanner) Initialize(limit int) {
 	s.jobBoard = make(map[string]*Job)
 	s.jobBoardLock = sync.RWMutex{}
 	s.jobBoardOpen = true
+	s.noop = noop
 }
 
 func (s *Scanner) CleanUp() {
@@ -105,18 +108,74 @@ func (s *Scanner) Work(id string) {
 		Findings: nil,
 	}
 
-	// TODO Download url
 	log.Println("Scanner starting repository download from url.")
-	<-time.NewTimer(1 * time.Second).C
+	var checkoutDir string
+	if s.noop {
+		<-time.NewTimer(1 * time.Second).C
+	} else {
+		// Make temp directory
+		if path, err := ioutil.TempDir("", "reposcanner"); err != nil {
+			log.Printf("failed to create checkout directory: %v", err.Error())
+			s.endJobWithFailure(j)
+		} else {
+			checkoutDir = path
+		}
+		defer DeleteTmpDirectory(checkoutDir)
+
+		// Download url
+		if err := CloneRepository(j.Repo.Url, j.Repo.Branch, checkoutDir); err != nil {
+			log.Printf("failed to download repository: %v", err.Error())
+			s.endJobWithFailure(j)
+		}
+	}
 
 	// Check for cancellation
 	if x := s.getFromJobBoard(id); x == nil {
 		return
 	}
 
-	// TODO Perform scan
 	log.Println("Scanner starting repository scan.")
-	<-time.NewTimer(1 * time.Second).C
+	var findings []*models.FindingsInfo
+	if s.noop {
+		<-time.NewTimer(1 * time.Second).C
+
+		// Send dummy results for testing purposes
+		findings = []*models.FindingsInfo{
+			{
+				Type_:  "sast",
+				RuleId: "G001",
+				Location: &models.FindingsLocation{
+					Path: "hello.go",
+					Positions: &models.FileLocation{
+						Begin: &models.LineLocation{Line: 21},
+					},
+				},
+				Metadata: &models.FindingsMetadata{
+					Description: "Hard-coded secret - public key",
+					Severity:    "HIGH",
+				},
+			},
+			{
+				Type_:  "sast",
+				RuleId: "G002",
+				Location: &models.FindingsLocation{
+					Path: "world.go",
+					Positions: &models.FileLocation{
+						Begin: &models.LineLocation{Line: 41},
+						End:   &models.LineLocation{Line: 43},
+					},
+				},
+				Metadata: &models.FindingsMetadata{
+					Description: "Hard-coded secret - private key",
+					Severity:    "HIGH",
+				},
+			},
+		}
+	} else {
+		var sf SecretFinder
+		sf.Initialize()
+		findings = sf.FindSecrets(checkoutDir)
+	}
 
 	// Check for cancellation
 	if x := s.getFromJobBoard(id); x == nil {
@@ -124,42 +183,19 @@ func (s *Scanner) Work(id string) {
 	}
 
 	// Send results
-	findings := []*models.FindingsInfo{
-		{
-			Type_:  "sast",
-			RuleId: "G001",
-			Location: &models.FindingsLocation{
-				Path: "hello.go",
-				Positions: &models.FileLocation{
-					Begin: &models.LineLocation{Line: 21},
-				},
-			},
-			Metadata: &models.FindingsMetadata{
-				Description: "Hard-coded secret - public key",
-				Severity:    "HIGH",
-			},
-		},
-		{
-			Type_:  "sast",
-			RuleId: "G002",
-			Location: &models.FindingsLocation{
-				Path: "world.go",
-				Positions: &models.FileLocation{
-					Begin: &models.LineLocation{Line: 41},
-					End:   &models.LineLocation{Line: 43},
-				},
-			},
-			Metadata: &models.FindingsMetadata{
-				Description: "Hard-coded secret - private key",
-				Severity:    "HIGH",
-			},
-		},
-	}
-
 	j.Result <- &JobUpdate{
 		Status:   "SUCCESS",
 		Findings: findings,
 	}
 
 	s.removeFromJobBoard(id)
+}
+
+func (s *Scanner) endJobWithFailure(j *Job) {
+	j.Result <- &JobUpdate{
+		Status:   "FAILURE",
+		Findings: nil,
+	}
+
+	s.removeFromJobBoard(j.Id)
 }

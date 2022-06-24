@@ -11,7 +11,7 @@ import (
 
 func setupScannerTests(limit int) *engine.Scanner {
 	var s engine.Scanner
-	s.Initialize(limit)
+	s.Initialize(limit, true)
 	return &s
 }
 
@@ -75,7 +75,7 @@ func TestStartScanRejectsDuplicateJobIds(t *testing.T) {
 	timeout := time.NewTimer(2 * time.Second)
 	defer timeout.Stop()
 
-	log.Printf("Starting for loop\n")
+	log.Printf("Waiting for second job to fail\n")
 	for {
 		select {
 		case r := <-results:
@@ -115,5 +115,88 @@ func TestScannerWorkHandlesCancellation(t *testing.T) {
 		case <-timeout.C:
 			return
 		}
+	}
+}
+
+func TestScannerWorksOnRealJob(t *testing.T) {
+	var s engine.Scanner
+	s.Initialize(1, false)
+
+	results := make(chan *engine.JobUpdate)
+
+	j := &engine.Job{
+		Id: "A",
+		Repo: &models.RepositoryInfo{
+			Name:   "testdata",
+			Url:    "https://github.com/UserProblem/testdata.git",
+			Branch: "master",
+		},
+		Result: results,
+	}
+
+	s.StartScan(j)
+
+	timeout := time.NewTimer(10 * time.Second)
+	defer timeout.Stop()
+
+	select {
+	case r := <-results:
+		if r.Status != "ONGOING" {
+			t.Fatalf("Expected job status to be ONGOING. Got %v\n", r.Status)
+		}
+	case <-timeout.C:
+		t.Fatalf("Expected to receive job status change, but timed out.\n")
+	}
+
+	select {
+	case r := <-results:
+		if r.Status != "SUCCESS" {
+			t.Fatalf("Expected job status to be SUCCESS. Got %v\n", r.Status)
+		}
+		if len(r.Findings) != 6 {
+			t.Errorf("Expected number of findings to be 6. Got %v\n", len(r.Findings))
+		}
+	case <-timeout.C:
+		t.Fatalf("Expected to receive job status change, but timed out.\n")
+	}
+}
+
+func TestScannerWorksOnRealJobNotFoundUrl(t *testing.T) {
+	var s engine.Scanner
+	s.Initialize(1, false)
+
+	results := make(chan *engine.JobUpdate)
+
+	j := &engine.Job{
+		Id: "A",
+		Repo: &models.RepositoryInfo{
+			Name:   "testdata",
+			Url:    "https://not.a/real/repo",
+			Branch: "master",
+		},
+		Result: results,
+	}
+
+	s.StartScan(j)
+
+	timeout := time.NewTimer(10 * time.Second)
+	defer timeout.Stop()
+
+	select {
+	case r := <-results:
+		if r.Status != "ONGOING" {
+			t.Fatalf("Expected job status to be ONGOING. Got %v\n", r.Status)
+		}
+	case <-timeout.C:
+		t.Fatalf("Expected to receive job status change, but timed out.\n")
+	}
+
+	select {
+	case r := <-results:
+		if r.Status != "FAILURE" {
+			t.Fatalf("Expected job status to be FAILURE. Got %v\n", r.Status)
+		}
+	case <-timeout.C:
+		t.Fatalf("Expected to receive job status change, but timed out.\n")
 	}
 }

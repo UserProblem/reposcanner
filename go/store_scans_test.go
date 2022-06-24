@@ -1,7 +1,6 @@
 package swagger_test
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 	"testing"
@@ -461,9 +460,6 @@ func TestListFindings(t *testing.T) {
 		t.Fatalf("Expected no error. Got %v\n", err.Error())
 	} else {
 		for i := range findings {
-			dump, _ := json.Marshal(results[i])
-			t.Logf("#%v: %v\n", i, string(dump))
-
 			expected := findings[i].Location.Positions.Begin.Line
 			actual := results[i].Location.Positions.Begin.Line
 

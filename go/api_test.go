@@ -17,7 +17,7 @@ const api_version string = "/v0"
 var app sw.App
 
 func TestMain(m *testing.M) {
-	godotenv.Load()
+	godotenv.Load(".env_test")
 	prepareDb()
 	app.Initialize()
 	os.Exit(m.Run())
@@ -27,9 +27,6 @@ func prepareDb() {
 	dbtype := os.Getenv("DATABASE_TYPE")
 	log.Printf("Running with database type '%v'\n", dbtype)
 	if dbtype == "postgresql" {
-		if err := godotenv.Load(); err != nil {
-			log.Fatalf("Failed to load environment: %v", err.Error())
-		}
 		PDB := sw.GetPsqlDBInstance()
 		PDB.Host = os.Getenv("DATABASE_HOST")
 		if pnum, err := strconv.Atoi(os.Getenv("DATABASE_PORT")); err != nil {

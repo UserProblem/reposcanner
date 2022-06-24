@@ -1,0 +1,214 @@
+{
+	"info": {
+		"_postman_id": "b019c7de-afef-416b-8810-5571841dac39",
+		"name": "Repository Scanner",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Repositories",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/repositories",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repositories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post Repository",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"test repo 1\",\r\n    \"url\": \"http://example.com/repo\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/repository",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repository"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Repository",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/repository/2",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repository",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Put Repository",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"modified repo name\",\r\n    \"url\": \"modified repo url\",\r\n    \"branch\": \"modified\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{BASE_URL}}/repository/1",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repository",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Repository",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/repository/3",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repository",
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Scan",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/repository/1/startScan",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"repository",
+						"1",
+						"startScan"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Scan",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/scan/AQAAAAAAAAA",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"scan",
+						"AQAAAAAAAAA"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Scan",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/scan/AQAAAAAAAAA",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"scan",
+						"AQAAAAAAAAA"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Scans",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL}}/scans",
+					"host": [
+						"{{BASE_URL}}"
+					],
+					"path": [
+						"scans"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:8080/v0",
+			"type": "default"
+		}
+	]
+}

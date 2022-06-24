@@ -71,7 +71,14 @@ func NewScanStorePsqlDB() (ScanStore, error) {
 // Helper function to auto-generate the next unique id value
 // that can be used for new scan records.
 func (ss *ScanStorePsqlDB) NextId() string {
-	return EncodeScanId(<-ss.nextId)
+	for {
+		tmpId := EncodeScanId(<-ss.nextId)
+		if _, err := ss.Retrieve(tmpId); err != nil {
+			if strings.HasSuffix(err.Error(), "does not exist") {
+				return tmpId
+			}
+		}
+	}
 }
 
 // Add a new scan record to the data store. Returns a pointer
@@ -153,6 +160,14 @@ func (ss *ScanStorePsqlDB) Retrieve(id string) (*models.ScanRecord, error) {
 // Delete an existing scan record from the data store.
 // Returns nil on success or an error on failure.
 func (ss *ScanStorePsqlDB) Delete(id string) error {
+	if sr, err := ss.Retrieve(id); err == nil {
+		if sr.Info.Status == "SUCCESS" {
+			if _, err = ss.DeleteFindings(id); err != nil {
+				return fmt.Errorf("failed to delete related findings: %v", err.Error())
+			}
+		}
+	}
+
 	res, err := ss.DB.Exec("DELETE FROM scans WHERE id=$1", id)
 
 	if err != nil {

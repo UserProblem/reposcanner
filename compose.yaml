@@ -1,6 +1,8 @@
 services:
   backend:
-    build: ./
+    build:
+      context: ./
+      dockerfile: docker/backend/Dockerfile
     secrets:
       - db-password
     depends_on:
@@ -19,7 +21,7 @@ services:
       - 5432
     
   proxy:
-    build: proxy
+    build: docker/proxy
     ports:
       - 8080:8080
     depends_on: 
@@ -28,4 +30,4 @@ volumes:
   db-data:
 secrets:
   db-password:
-    file: db/password.txt
+    file: docker/db/password.txt

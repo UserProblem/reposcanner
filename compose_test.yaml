@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./
-      dockerfile: Dockerfile_test
+      dockerfile: docker/backend/Dockerfile_test
     secrets:
       - db-password
     depends_on:
@@ -23,4 +23,4 @@ volumes:
   db-data:
 secrets:
   db-password:
-    file: db/password.txt
+    file: docker/db/password.txt
